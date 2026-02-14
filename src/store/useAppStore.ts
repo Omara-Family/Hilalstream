@@ -6,6 +6,7 @@ interface AppState {
   user: User | null;
   isAuthenticated: boolean;
   isLoading: boolean;
+  isAdmin: boolean;
   favorites: string[];
   setUser: (user: User | null) => void;
   setFavorites: (favs: string[]) => void;
@@ -22,13 +23,19 @@ const loadFavorites = async (userId: string) => {
   return data?.map(f => f.series_id) ?? [];
 };
 
+const checkAdmin = async (userId: string) => {
+  const { data } = await supabase.rpc('has_role', { _user_id: userId, _role: 'admin' });
+  return data === true;
+};
+
 export const useAppStore = create<AppState>((set, get) => ({
   user: null,
   isAuthenticated: false,
   isLoading: true,
+  isAdmin: false,
   favorites: [],
 
-  setUser: (user) => set({ user, isAuthenticated: !!user, isLoading: false }),
+  setUser: (user) => set({ user, isAuthenticated: !!user, isLoading: false, isAdmin: user ? get().isAdmin : false }),
   setFavorites: (favs) => set({ favorites: favs }),
 
   toggleFavorite: async (seriesId) => {
@@ -52,7 +59,7 @@ export const useAppStore = create<AppState>((set, get) => ({
     } catch (e) {
       console.error('signOut exception:', e);
     }
-    set({ user: null, isAuthenticated: false, favorites: [] });
+    set({ user: null, isAuthenticated: false, isAdmin: false, favorites: [] });
   },
 
   initialize: () => {
@@ -62,20 +69,27 @@ export const useAppStore = create<AppState>((set, get) => ({
       set({ user, isAuthenticated: !!user, isLoading: false });
 
       if (user) {
-        const favs = await loadFavorites(user.id);
-        set({ favorites: favs });
+        const [favs, admin] = await Promise.all([
+          loadFavorites(user.id),
+          checkAdmin(user.id),
+        ]);
+        set({ favorites: favs, isAdmin: admin });
       } else {
-        set({ favorites: [] });
+        set({ favorites: [], isAdmin: false });
       }
     });
 
     // Get initial session
-    supabase.auth.getSession().then(({ data: { session } }) => {
+    supabase.auth.getSession().then(async ({ data: { session } }) => {
       const user = session?.user ?? null;
       set({ user, isAuthenticated: !!user, isLoading: false });
 
       if (user) {
-        loadFavorites(user.id).then(favs => set({ favorites: favs }));
+        const [favs, admin] = await Promise.all([
+          loadFavorites(user.id),
+          checkAdmin(user.id),
+        ]);
+        set({ favorites: favs, isAdmin: admin });
       }
     });
   },

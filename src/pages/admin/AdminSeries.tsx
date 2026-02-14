@@ -31,6 +31,7 @@ export default function AdminSeries() {
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [editId, setEditId] = useState<string | null>(null);
   const [form, setForm] = useState<SeriesForm>(emptyForm);
+  const [saving, setSaving] = useState(false);
   const { toast } = useToast();
 
   const load = async () => {
@@ -54,22 +55,28 @@ export default function AdminSeries() {
   };
 
   const save = async () => {
-    const payload = {
-      title_ar: form.title_ar, title_en: form.title_en, slug: form.slug,
-      description_ar: form.description_ar, description_en: form.description_en,
-      poster_image: form.poster_image, backdrop_image: form.backdrop_image,
-      release_year: form.release_year, rating: form.rating,
-      genre: form.genre.split(',').map(s => s.trim()).filter(Boolean),
-      tags: form.tags.split(',').map(s => s.trim()).filter(Boolean),
-    };
-    const { error } = editId
-      ? await supabase.from('series').update(payload).eq('id', editId)
-      : await supabase.from('series').insert(payload);
-    if (error) {
-      toast({ title: t('common.error'), description: error.message, variant: 'destructive' });
-    } else {
-      toast({ title: editId ? t('admin.updated') : t('admin.created') });
-      setOpen(false); load();
+    if (saving) return;
+    setSaving(true);
+    try {
+      const payload = {
+        title_ar: form.title_ar, title_en: form.title_en, slug: form.slug,
+        description_ar: form.description_ar, description_en: form.description_en,
+        poster_image: form.poster_image, backdrop_image: form.backdrop_image,
+        release_year: form.release_year, rating: form.rating,
+        genre: form.genre.split(',').map(s => s.trim()).filter(Boolean),
+        tags: form.tags.split(',').map(s => s.trim()).filter(Boolean),
+      };
+      const { error } = editId
+        ? await supabase.from('series').update(payload).eq('id', editId)
+        : await supabase.from('series').insert(payload);
+      if (error) {
+        toast({ title: t('common.error'), description: error.message, variant: 'destructive' });
+      } else {
+        toast({ title: editId ? t('admin.updated') : t('admin.created') });
+        setOpen(false); load();
+      }
+    } finally {
+      setSaving(false);
     }
   };
 
@@ -176,8 +183,8 @@ export default function AdminSeries() {
             </div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setOpen(false)}>{t('common.cancel')}</Button>
-            <Button onClick={save}>{editId ? t('admin.updated') : t('admin.created')}</Button>
+            <Button variant="outline" onClick={() => setOpen(false)} disabled={saving}>{t('common.cancel')}</Button>
+            <Button onClick={save} disabled={saving}>{saving ? '...' : (editId ? t('admin.updated') : t('admin.created'))}</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
