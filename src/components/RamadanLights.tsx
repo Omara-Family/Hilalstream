@@ -9,7 +9,7 @@ const RamadanLights = () => {
   }));
 
   return (
-    <div className="fixed top-0 left-0 right-0 z-[60] pointer-events-none overflow-hidden">
+    <div className="fixed top-16 left-0 right-0 z-40 pointer-events-none overflow-hidden">
       {/* String/wire */}
       <svg className="w-full h-16 md:h-20" viewBox="0 0 1200 80" preserveAspectRatio="none">
         <path
