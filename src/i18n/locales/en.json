@@ -1,0 +1,85 @@
+{
+  "nav": {
+    "home": "Home",
+    "browse": "Browse",
+    "search": "Search",
+    "favorites": "Favorites",
+    "login": "Login",
+    "register": "Register",
+    "admin": "Dashboard",
+    "logout": "Logout"
+  },
+  "hero": {
+    "watch": "Watch Now",
+    "details": "More Details",
+    "trending": "Trending"
+  },
+  "home": {
+    "trending": "Trending Now",
+    "latest": "Latest Episodes",
+    "popular": "Most Popular",
+    "categories": "Browse by Genre",
+    "viewAll": "View All"
+  },
+  "series": {
+    "episodes": "Episodes",
+    "related": "Related Series",
+    "addFavorite": "Add to Favorites",
+    "removeFavorite": "Remove from Favorites",
+    "views": "views",
+    "episode": "Episode",
+    "year": "Year",
+    "genre": "Genre",
+    "rating": "Rating",
+    "noEpisodes": "No episodes available yet."
+  },
+  "watch": {
+    "server": "Server",
+    "download": "Download",
+    "nextEpisode": "Next Episode",
+    "prevEpisode": "Previous Episode",
+    "selectServer": "Select Server",
+    "autoNext": "Auto Next"
+  },
+  "search": {
+    "placeholder": "Search series...",
+    "noResults": "No results found",
+    "results": "Results for",
+    "filterYear": "Filter by Year",
+    "filterGenre": "Filter by Genre",
+    "allYears": "All Years",
+    "allGenres": "All Genres"
+  },
+  "auth": {
+    "login": "Login",
+    "register": "Register",
+    "email": "Email",
+    "password": "Password",
+    "name": "Full Name",
+    "confirmPassword": "Confirm Password",
+    "forgotPassword": "Forgot Password?",
+    "noAccount": "Don't have an account?",
+    "hasAccount": "Already have an account?",
+    "loginBtn": "Sign In",
+    "registerBtn": "Create Account"
+  },
+  "common": {
+    "loading": "Loading...",
+    "error": "Something went wrong",
+    "retry": "Try Again",
+    "back": "Back",
+    "save": "Save",
+    "cancel": "Cancel",
+    "delete": "Delete",
+    "edit": "Edit",
+    "add": "Add",
+    "close": "Close"
+  },
+  "footer": {
+    "rights": "All rights reserved",
+    "about": "About",
+    "contact": "Contact",
+    "privacy": "Privacy Policy",
+    "terms": "Terms of Service"
+  }
+}

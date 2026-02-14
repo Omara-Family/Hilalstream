@@ -1,0 +1,85 @@
+{
+  "nav": {
+    "home": "الرئيسية",
+    "browse": "تصفح",
+    "search": "بحث",
+    "favorites": "المفضلة",
+    "login": "تسجيل الدخول",
+    "register": "إنشاء حساب",
+    "admin": "لوحة التحكم",
+    "logout": "تسجيل الخروج"
+  },
+  "hero": {
+    "watch": "شاهد الآن",
+    "details": "المزيد",
+    "trending": "رائج"
+  },
+  "home": {
+    "trending": "الرائج الآن",
+    "latest": "أحدث الحلقات",
+    "popular": "الأكثر مشاهدة",
+    "categories": "تصفح حسب النوع",
+    "viewAll": "عرض الكل"
+  },
+  "series": {
+    "episodes": "الحلقات",
+    "related": "مسلسلات مشابهة",
+    "addFavorite": "أضف للمفضلة",
+    "removeFavorite": "إزالة من المفضلة",
+    "views": "مشاهدة",
+    "episode": "الحلقة",
+    "year": "السنة",
+    "genre": "النوع",
+    "rating": "التقييم",
+    "noEpisodes": "لا توجد حلقات متاحة بعد."
+  },
+  "watch": {
+    "server": "سيرفر",
+    "download": "تحميل",
+    "nextEpisode": "الحلقة التالية",
+    "prevEpisode": "الحلقة السابقة",
+    "selectServer": "اختر السيرفر",
+    "autoNext": "تشغيل تلقائي"
+  },
+  "search": {
+    "placeholder": "ابحث عن مسلسل...",
+    "noResults": "لا توجد نتائج",
+    "results": "نتائج البحث عن",
+    "filterYear": "فلتر حسب السنة",
+    "filterGenre": "فلتر حسب النوع",
+    "allYears": "كل السنوات",
+    "allGenres": "كل الأنواع"
+  },
+  "auth": {
+    "login": "تسجيل الدخول",
+    "register": "إنشاء حساب",
+    "email": "البريد الإلكتروني",
+    "password": "كلمة المرور",
+    "name": "الاسم الكامل",
+    "confirmPassword": "تأكيد كلمة المرور",
+    "forgotPassword": "نسيت كلمة المرور؟",
+    "noAccount": "ليس لديك حساب؟",
+    "hasAccount": "لديك حساب بالفعل؟",
+    "loginBtn": "دخول",
+    "registerBtn": "إنشاء حساب"
+  },
+  "common": {
+    "loading": "جاري التحميل...",
+    "error": "حدث خطأ ما",
+    "retry": "حاول مرة أخرى",
+    "back": "رجوع",
+    "save": "حفظ",
+    "cancel": "إلغاء",
+    "delete": "حذف",
+    "edit": "تعديل",
+    "add": "إضافة",
+    "close": "إغلاق"
+  },
+  "footer": {
+    "rights": "جميع الحقوق محفوظة",
+    "about": "عن الموقع",
+    "contact": "اتصل بنا",
+    "privacy": "سياسة الخصوصية",
+    "terms": "شروط الاستخدام"
+  }
+}
