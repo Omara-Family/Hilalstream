@@ -51,7 +51,7 @@ export const useAppStore = create<AppState>((set, get) => ({
   },
 
   initialize: () => {
-    // Set up auth state listener FIRST (this is the authoritative source)
+    // Listen for auth changes (login, logout, token refresh)
     supabase.auth.onAuthStateChange(async (_event, session) => {
       const user = session?.user ?? null;
       set({ user, isAuthenticated: !!user, isLoading: false });
@@ -64,22 +64,14 @@ export const useAppStore = create<AppState>((set, get) => ({
       }
     });
 
-    // Then get existing session — but DON'T set isLoading to false if no user,
-    // because onAuthStateChange might fire right after with the real session.
+    // Get initial session
     supabase.auth.getSession().then(({ data: { session } }) => {
       const user = session?.user ?? null;
+      set({ user, isAuthenticated: !!user, isLoading: false });
+
       if (user) {
-        // We have a confirmed user, update immediately
-        set({ user, isAuthenticated: true, isLoading: false });
+        loadFavorites(user.id).then(favs => set({ favorites: favs }));
       }
-      // If no user from getSession, wait for onAuthStateChange to confirm
-      // Set a fallback timeout to avoid infinite loading
-      setTimeout(() => {
-        const state = get();
-        if (state.isLoading) {
-          set({ isLoading: false });
-        }
-      }, 2000);
     });
   },
 }));
