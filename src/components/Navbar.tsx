@@ -118,7 +118,15 @@ const Navbar = () => {
                 <Link key={link.to} to={link.to} onClick={() => setMobileOpen(false)} className="text-sm font-medium text-secondary-foreground hover:text-primary py-2">{link.label}</Link>
               ))}
               {isAuthenticated ? (
-                <button onClick={() => { handleLogout(); setMobileOpen(false); }} className="text-sm font-medium text-muted-foreground py-2 text-start">{t('nav.logout')}</button>
+                <>
+                  {isAdmin && (
+                    <Link to="/admin" onClick={() => setMobileOpen(false)} className="flex items-center gap-2 text-sm font-medium text-primary py-2">
+                      <Shield className="w-4 h-4" />
+                      Admin
+                    </Link>
+                  )}
+                  <button onClick={() => { handleLogout(); setMobileOpen(false); }} className="text-sm font-medium text-muted-foreground py-2 text-start">{t('nav.logout')}</button>
+                </>
               ) : (
                 <Link to="/login" onClick={() => setMobileOpen(false)} className="text-sm font-medium text-primary py-2">{t('nav.login')}</Link>
               )}

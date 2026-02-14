@@ -7,6 +7,7 @@ import Navbar from '@/components/Navbar';
 import { mockSeries, mockEpisodes } from '@/data/mock';
 import { useLocale } from '@/hooks/useLocale';
 import { supabase } from '@/integrations/supabase/client';
+import { useAppStore } from '@/store/useAppStore';
 import type { Series, Episode } from '@/types';
 
 const mapDbSeries = (s: any): Series => ({
@@ -30,6 +31,7 @@ const Watch = () => {
   const { t } = useTranslation();
   const { getTitle } = useLocale();
   const navigate = useNavigate();
+  const { user } = useAppStore();
   const [activeServer, setActiveServer] = useState(0);
   const [series, setSeries] = useState<Series | null>(null);
   const [episodes, setEpisodes] = useState<Episode[]>([]);
@@ -63,16 +65,27 @@ const Watch = () => {
     setActiveServer(0);
   }, [seriesSlug]);
 
-  // Increment views when episode changes
+  // Increment views + save continue watching when episode changes
   useEffect(() => {
     if (!loading && episodes.length > 0) {
       const ep = episodes.find(e => e.episodeNumber === epNum);
       if (ep && ep._id.length > 10) {
         // Only call for real DB episodes (UUIDs)
         supabase.rpc('increment_episode_views', { _episode_id: ep._id }).then(() => {});
+        
+        // Save continue watching progress
+        if (user) {
+          supabase
+            .from('continue_watching')
+            .upsert(
+              { user_id: user.id, episode_id: ep._id, progress_seconds: 0, updated_at: new Date().toISOString() },
+              { onConflict: 'user_id,episode_id' }
+            )
+            .then(() => {});
+        }
       }
     }
-  }, [epNum, loading, episodes]);
+  }, [epNum, loading, episodes, user]);
 
   if (loading) {
     return <div className="min-h-screen bg-background flex items-center justify-center"><div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin" /></div>;
