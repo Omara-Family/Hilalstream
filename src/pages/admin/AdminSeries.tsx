@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -11,17 +12,10 @@ import { useToast } from '@/hooks/use-toast';
 import type { DbSeries } from '@/lib/api';
 
 type SeriesForm = {
-  title_ar: string;
-  title_en: string;
-  slug: string;
-  description_ar: string;
-  description_en: string;
-  poster_image: string;
-  backdrop_image: string;
-  release_year: number;
-  genre: string;
-  tags: string;
-  rating: number;
+  title_ar: string; title_en: string; slug: string;
+  description_ar: string; description_en: string;
+  poster_image: string; backdrop_image: string;
+  release_year: number; genre: string; tags: string; rating: number;
 };
 
 const emptyForm: SeriesForm = {
@@ -31,6 +25,7 @@ const emptyForm: SeriesForm = {
 };
 
 export default function AdminSeries() {
+  const { t } = useTranslation();
   const [series, setSeries] = useState<DbSeries[]>([]);
   const [open, setOpen] = useState(false);
   const [deleteId, setDeleteId] = useState<string | null>(null);
@@ -67,17 +62,14 @@ export default function AdminSeries() {
       genre: form.genre.split(',').map(s => s.trim()).filter(Boolean),
       tags: form.tags.split(',').map(s => s.trim()).filter(Boolean),
     };
-
     const { error } = editId
       ? await supabase.from('series').update(payload).eq('id', editId)
       : await supabase.from('series').insert(payload);
-
     if (error) {
-      toast({ title: 'Error', description: error.message, variant: 'destructive' });
+      toast({ title: t('common.error'), description: error.message, variant: 'destructive' });
     } else {
-      toast({ title: editId ? 'Updated' : 'Created' });
-      setOpen(false);
-      load();
+      toast({ title: editId ? t('admin.updated') : t('admin.created') });
+      setOpen(false); load();
     }
   };
 
@@ -85,11 +77,9 @@ export default function AdminSeries() {
     if (!deleteId) return;
     const { error } = await supabase.from('series').delete().eq('id', deleteId);
     if (error) {
-      toast({ title: 'Error', description: error.message, variant: 'destructive' });
+      toast({ title: t('common.error'), description: error.message, variant: 'destructive' });
     } else {
-      toast({ title: 'Deleted' });
-      setDeleteId(null);
-      load();
+      toast({ title: t('admin.deleted') }); setDeleteId(null); load();
     }
   };
 
@@ -98,20 +88,20 @@ export default function AdminSeries() {
   return (
     <div className="space-y-4">
       <div className="flex justify-between items-center">
-        <h2 className="text-2xl font-bold text-foreground">Series Management</h2>
-        <Button onClick={openCreate}><Plus className="h-4 w-4 mr-2" />Add Series</Button>
+        <h2 className="text-2xl font-bold text-foreground">{t('admin.seriesManagement')}</h2>
+        <Button onClick={openCreate}><Plus className="h-4 w-4 me-2" />{t('admin.addSeries')}</Button>
       </div>
 
       <div className="rounded-md border border-border overflow-auto">
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>Title (EN)</TableHead>
-              <TableHead>Title (AR)</TableHead>
-              <TableHead>Year</TableHead>
-              <TableHead>Rating</TableHead>
-              <TableHead>Views</TableHead>
-              <TableHead className="w-24">Actions</TableHead>
+              <TableHead>{t('admin.titleEn')}</TableHead>
+              <TableHead>{t('admin.titleAr')}</TableHead>
+              <TableHead>{t('admin.year')}</TableHead>
+              <TableHead>{t('admin.rating')}</TableHead>
+              <TableHead>{t('admin.views')}</TableHead>
+              <TableHead className="w-24">{t('admin.actions')}</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -134,75 +124,73 @@ export default function AdminSeries() {
         </Table>
       </div>
 
-      {/* Create/Edit Dialog */}
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto bg-card">
           <DialogHeader>
-            <DialogTitle>{editId ? 'Edit Series' : 'New Series'}</DialogTitle>
+            <DialogTitle>{editId ? t('admin.editSeries') : t('admin.newSeries')}</DialogTitle>
           </DialogHeader>
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-1">
-              <label className="text-sm text-muted-foreground">Title (EN)</label>
+              <label className="text-sm text-muted-foreground">{t('admin.titleEn')}</label>
               <Input value={form.title_en} onChange={e => f('title_en', e.target.value)} />
             </div>
             <div className="space-y-1">
-              <label className="text-sm text-muted-foreground">Title (AR)</label>
+              <label className="text-sm text-muted-foreground">{t('admin.titleAr')}</label>
               <Input value={form.title_ar} onChange={e => f('title_ar', e.target.value)} />
             </div>
             <div className="space-y-1">
-              <label className="text-sm text-muted-foreground">Slug</label>
+              <label className="text-sm text-muted-foreground">{t('admin.slug')}</label>
               <Input value={form.slug} onChange={e => f('slug', e.target.value)} />
             </div>
             <div className="space-y-1">
-              <label className="text-sm text-muted-foreground">Year</label>
+              <label className="text-sm text-muted-foreground">{t('admin.year')}</label>
               <Input type="number" value={form.release_year} onChange={e => f('release_year', parseInt(e.target.value))} />
             </div>
             <div className="space-y-1 col-span-2">
-              <label className="text-sm text-muted-foreground">Description (EN)</label>
+              <label className="text-sm text-muted-foreground">{t('admin.descEn')}</label>
               <Textarea value={form.description_en} onChange={e => f('description_en', e.target.value)} />
             </div>
             <div className="space-y-1 col-span-2">
-              <label className="text-sm text-muted-foreground">Description (AR)</label>
+              <label className="text-sm text-muted-foreground">{t('admin.descAr')}</label>
               <Textarea value={form.description_ar} onChange={e => f('description_ar', e.target.value)} />
             </div>
             <div className="space-y-1">
-              <label className="text-sm text-muted-foreground">Poster Image URL</label>
+              <label className="text-sm text-muted-foreground">{t('admin.posterUrl')}</label>
               <Input value={form.poster_image} onChange={e => f('poster_image', e.target.value)} />
             </div>
             <div className="space-y-1">
-              <label className="text-sm text-muted-foreground">Backdrop Image URL</label>
+              <label className="text-sm text-muted-foreground">{t('admin.backdropUrl')}</label>
               <Input value={form.backdrop_image} onChange={e => f('backdrop_image', e.target.value)} />
             </div>
             <div className="space-y-1">
-              <label className="text-sm text-muted-foreground">Genre (comma-separated)</label>
+              <label className="text-sm text-muted-foreground">{t('admin.genre')}</label>
               <Input value={form.genre} onChange={e => f('genre', e.target.value)} />
             </div>
             <div className="space-y-1">
-              <label className="text-sm text-muted-foreground">Tags (comma-separated)</label>
+              <label className="text-sm text-muted-foreground">{t('admin.tags')}</label>
               <Input value={form.tags} onChange={e => f('tags', e.target.value)} />
             </div>
             <div className="space-y-1">
-              <label className="text-sm text-muted-foreground">Rating</label>
+              <label className="text-sm text-muted-foreground">{t('admin.rating')}</label>
               <Input type="number" step="0.1" min="0" max="10" value={form.rating} onChange={e => f('rating', parseFloat(e.target.value))} />
             </div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setOpen(false)}>Cancel</Button>
-            <Button onClick={save}>{editId ? 'Update' : 'Create'}</Button>
+            <Button variant="outline" onClick={() => setOpen(false)}>{t('common.cancel')}</Button>
+            <Button onClick={save}>{editId ? t('admin.updated') : t('admin.created')}</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
 
-      {/* Delete Confirmation */}
       <AlertDialog open={!!deleteId} onOpenChange={(o) => !o && setDeleteId(null)}>
         <AlertDialogContent className="bg-card">
           <AlertDialogHeader>
-            <AlertDialogTitle>Delete Series?</AlertDialogTitle>
-            <AlertDialogDescription>This will permanently delete the series and all its episodes.</AlertDialogDescription>
+            <AlertDialogTitle>{t('admin.deleteSeries')}</AlertDialogTitle>
+            <AlertDialogDescription>{t('admin.deleteSeriesDesc')}</AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction onClick={deleteSeries} className="bg-destructive text-destructive-foreground">Delete</AlertDialogAction>
+            <AlertDialogCancel>{t('common.cancel')}</AlertDialogCancel>
+            <AlertDialogAction onClick={deleteSeries} className="bg-destructive text-destructive-foreground">{t('common.delete')}</AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
