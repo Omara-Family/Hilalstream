@@ -1,17 +1,27 @@
 import { Link, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { Search, Heart, Menu, X, Globe, LogOut } from 'lucide-react';
-import { useState } from 'react';
+import { Search, Heart, Menu, X, Globe, LogOut, Shield } from 'lucide-react';
+import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAppStore } from '@/store/useAppStore';
+import { supabase } from '@/integrations/supabase/client';
 
 const Navbar = () => {
   const { t, i18n } = useTranslation();
   const [mobileOpen, setMobileOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
+  const [isAdmin, setIsAdmin] = useState(false);
   const navigate = useNavigate();
   const { isAuthenticated, logout, user } = useAppStore();
+
+  useEffect(() => {
+    if (user) {
+      supabase.rpc('has_role', { _user_id: user.id, _role: 'admin' }).then(({ data }) => setIsAdmin(!!data));
+    } else {
+      setIsAdmin(false);
+    }
+  }, [user]);
 
   const toggleLang = () => {
     i18n.changeLanguage(i18n.language === 'ar' ? 'en' : 'ar');
@@ -63,10 +73,18 @@ const Navbar = () => {
           </Link>
 
           {isAuthenticated ? (
-            <button onClick={handleLogout} className="hidden md:flex items-center gap-1 px-3 py-2 rounded-lg text-sm text-muted-foreground hover:text-primary transition-colors">
-              <LogOut className="w-4 h-4" />
-              {t('nav.logout')}
-            </button>
+            <>
+              {isAdmin && (
+                <Link to="/admin" className="hidden md:flex items-center gap-1 px-3 py-2 rounded-lg text-sm text-primary hover:opacity-80 transition-opacity">
+                  <Shield className="w-4 h-4" />
+                  Admin
+                </Link>
+              )}
+              <button onClick={handleLogout} className="hidden md:flex items-center gap-1 px-3 py-2 rounded-lg text-sm text-muted-foreground hover:text-primary transition-colors">
+                <LogOut className="w-4 h-4" />
+                {t('nav.logout')}
+              </button>
+            </>
           ) : (
             <Link to="/login" className="hidden md:flex px-4 py-2 rounded-lg bg-primary text-primary-foreground text-sm font-semibold hover:opacity-90 transition-opacity">
               {t('nav.login')}
