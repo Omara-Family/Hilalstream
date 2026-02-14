@@ -14,6 +14,14 @@ interface AppState {
   initialize: () => void;
 }
 
+const loadFavorites = async (userId: string) => {
+  const { data } = await supabase
+    .from('favorites')
+    .select('series_id')
+    .eq('user_id', userId);
+  return data?.map(f => f.series_id) ?? [];
+};
+
 export const useAppStore = create<AppState>((set, get) => ({
   user: null,
   isAuthenticated: false,
@@ -43,27 +51,35 @@ export const useAppStore = create<AppState>((set, get) => ({
   },
 
   initialize: () => {
-    // Set up auth state listener FIRST
-    supabase.auth.onAuthStateChange(async (event, session) => {
+    // Set up auth state listener FIRST (this is the authoritative source)
+    supabase.auth.onAuthStateChange(async (_event, session) => {
       const user = session?.user ?? null;
       set({ user, isAuthenticated: !!user, isLoading: false });
 
       if (user) {
-        // Load favorites
-        const { data } = await supabase
-          .from('favorites')
-          .select('series_id')
-          .eq('user_id', user.id);
-        if (data) {
-          set({ favorites: data.map(f => f.series_id) });
-        }
+        const favs = await loadFavorites(user.id);
+        set({ favorites: favs });
+      } else {
+        set({ favorites: [] });
       }
     });
 
-    // Then get existing session
+    // Then get existing session — but DON'T set isLoading to false if no user,
+    // because onAuthStateChange might fire right after with the real session.
     supabase.auth.getSession().then(({ data: { session } }) => {
       const user = session?.user ?? null;
-      set({ user, isAuthenticated: !!user, isLoading: false });
+      if (user) {
+        // We have a confirmed user, update immediately
+        set({ user, isAuthenticated: true, isLoading: false });
+      }
+      // If no user from getSession, wait for onAuthStateChange to confirm
+      // Set a fallback timeout to avoid infinite loading
+      setTimeout(() => {
+        const state = get();
+        if (state.isLoading) {
+          set({ isLoading: false });
+        }
+      }, 2000);
     });
   },
 }));
