@@ -3,6 +3,8 @@ import { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
 import { Heart } from 'lucide-react';
 import Navbar from '@/components/Navbar';
+import RamadanLights from '@/components/RamadanLights';
+import RamadanBanner from '@/components/RamadanBanner';
 import Footer from '@/components/Footer';
 import SeriesCard from '@/components/SeriesCard';
 import { useAppStore } from '@/store/useAppStore';
@@ -47,7 +49,9 @@ const Favorites = () => {
 
   return (
     <div className="min-h-screen bg-background">
+      <RamadanLights />
       <Navbar />
+      <RamadanBanner />
       <main className="pt-24 pb-12">
         <div className="container mx-auto px-4">
           <h1 className="text-2xl md:text-3xl font-display font-bold text-foreground mb-6 flex items-center gap-2">
