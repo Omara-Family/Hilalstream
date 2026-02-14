@@ -63,9 +63,16 @@ export const useAppStore = create<AppState>((set, get) => ({
   },
 
   initialize: () => {
-    // Listen for auth changes (login, logout, token refresh)
-    supabase.auth.onAuthStateChange(async (_event, session) => {
-      const user = session?.user ?? null;
+    let lastUserId: string | null = null;
+
+    const handleUser = async (user: User | null) => {
+      // If same user, just update session – don't re-check admin
+      if (user && user.id === lastUserId) {
+        set({ user, isAuthenticated: true, isLoading: false });
+        return;
+      }
+
+      lastUserId = user?.id ?? null;
       set({ user, isAuthenticated: !!user, isLoading: false });
 
       if (user) {
@@ -77,20 +84,14 @@ export const useAppStore = create<AppState>((set, get) => ({
       } else {
         set({ favorites: [], isAdmin: false });
       }
+    };
+
+    supabase.auth.onAuthStateChange((_event, session) => {
+      handleUser(session?.user ?? null);
     });
 
-    // Get initial session
-    supabase.auth.getSession().then(async ({ data: { session } }) => {
-      const user = session?.user ?? null;
-      set({ user, isAuthenticated: !!user, isLoading: false });
-
-      if (user) {
-        const [favs, admin] = await Promise.all([
-          loadFavorites(user.id),
-          checkAdmin(user.id),
-        ]);
-        set({ favorites: favs, isAdmin: admin });
-      }
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      handleUser(session?.user ?? null);
     });
   },
 }));
