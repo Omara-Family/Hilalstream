@@ -13,6 +13,11 @@ import Favorites from "./pages/Favorites";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
 import NotFound from "./pages/NotFound";
+import { AdminLayout } from "./components/admin/AdminLayout";
+import AdminDashboard from "./pages/admin/AdminDashboard";
+import AdminSeries from "./pages/admin/AdminSeries";
+import AdminEpisodes from "./pages/admin/AdminEpisodes";
+import AdminUsers from "./pages/admin/AdminUsers";
 
 const queryClient = new QueryClient();
 
@@ -33,6 +38,12 @@ const AppInner = () => {
       <Route path="/favorites" element={<Favorites />} />
       <Route path="/login" element={<Login />} />
       <Route path="/register" element={<Register />} />
+      <Route path="/admin" element={<AdminLayout />}>
+        <Route index element={<AdminDashboard />} />
+        <Route path="series" element={<AdminSeries />} />
+        <Route path="episodes" element={<AdminEpisodes />} />
+        <Route path="users" element={<AdminUsers />} />
+      </Route>
       <Route path="*" element={<NotFound />} />
     </Routes>
   );
