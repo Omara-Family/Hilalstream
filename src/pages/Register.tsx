@@ -7,23 +7,36 @@ import Navbar from '@/components/Navbar';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/hooks/use-toast';
 
-const Login = () => {
+const Register = () => {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const [showPass, setShowPass] = useState(false);
+  const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (password.length < 6) {
+      toast({ title: t('common.error'), description: 'Password must be at least 6 characters', variant: 'destructive' });
+      return;
+    }
     setLoading(true);
-    const { error } = await supabase.auth.signInWithPassword({ email, password });
+    const { error } = await supabase.auth.signUp({
+      email,
+      password,
+      options: {
+        data: { name },
+        emailRedirectTo: window.location.origin,
+      },
+    });
     setLoading(false);
     if (error) {
       toast({ title: t('common.error'), description: error.message, variant: 'destructive' });
     } else {
-      navigate('/');
+      toast({ title: '✅', description: 'Check your email to confirm your account' });
+      navigate('/login');
     }
   };
 
@@ -34,9 +47,13 @@ const Login = () => {
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="w-full max-w-md">
           <div className="text-center mb-8">
             <h1 className="text-3xl font-display font-bold text-gradient-gold mb-2">☪ HilalStream</h1>
-            <p className="text-muted-foreground">{t('auth.login')}</p>
+            <p className="text-muted-foreground">{t('auth.register')}</p>
           </div>
           <form onSubmit={handleSubmit} className="bg-card rounded-xl p-6 space-y-5 border border-border">
+            <div>
+              <label className="block text-sm font-medium text-foreground mb-1.5">{t('auth.name')}</label>
+              <input type="text" required value={name} onChange={e => setName(e.target.value)} className="w-full px-4 py-3 rounded-lg bg-secondary text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary text-sm" />
+            </div>
             <div>
               <label className="block text-sm font-medium text-foreground mb-1.5">{t('auth.email')}</label>
               <input type="email" required value={email} onChange={e => setEmail(e.target.value)} className="w-full px-4 py-3 rounded-lg bg-secondary text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary text-sm" placeholder="email@example.com" />
@@ -51,10 +68,10 @@ const Login = () => {
               </div>
             </div>
             <button type="submit" disabled={loading} className="w-full py-3 rounded-lg bg-primary text-primary-foreground font-bold hover:opacity-90 transition-opacity disabled:opacity-50">
-              {loading ? t('common.loading') : t('auth.loginBtn')}
+              {loading ? t('common.loading') : t('auth.registerBtn')}
             </button>
             <p className="text-center text-sm text-muted-foreground">
-              {t('auth.noAccount')} <Link to="/register" className="text-primary hover:underline">{t('auth.register')}</Link>
+              {t('auth.hasAccount')} <Link to="/login" className="text-primary hover:underline">{t('auth.login')}</Link>
             </p>
           </form>
         </motion.div>
@@ -63,4 +80,4 @@ const Login = () => {
   );
 };
 
-export default Login;
+export default Register;

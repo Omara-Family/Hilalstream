@@ -1,4 +1,5 @@
 import { useTranslation } from 'react-i18next';
+import { useEffect, useState } from 'react';
 import HeroBanner from '@/components/HeroBanner';
 import SectionRow from '@/components/SectionRow';
 import Navbar from '@/components/Navbar';
@@ -8,15 +9,56 @@ import { genres } from '@/data/mock';
 import { useLocale } from '@/hooks/useLocale';
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
+import { supabase } from '@/integrations/supabase/client';
+import type { Tables } from '@/integrations/supabase/types';
+
+type DbSeries = Tables<'series'>;
+
+// Adapter: map DB series to the shape our components expect
+const mapSeries = (s: DbSeries) => ({
+  _id: s.id,
+  title_ar: s.title_ar,
+  title_en: s.title_en,
+  slug: s.slug,
+  description_ar: s.description_ar || '',
+  description_en: s.description_en || '',
+  posterImage: s.poster_image || '',
+  backdropImage: s.backdrop_image || '',
+  releaseYear: s.release_year,
+  genre: s.genre || [],
+  tags: s.tags || [],
+  rating: Number(s.rating) || 0,
+  totalViews: s.total_views || 0,
+  isTrending: s.is_trending || false,
+  createdAt: s.created_at,
+});
 
 const Index = () => {
   const { t } = useTranslation();
   const { getGenreLabel } = useLocale();
+  const [allSeries, setAllSeries] = useState(mockSeries);
+  const [loading, setLoading] = useState(true);
 
-  const trending = mockSeries.filter(s => s.isTrending);
-  const popular = [...mockSeries].sort((a, b) => b.totalViews - a.totalViews);
-  const latest = [...mockSeries].sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
-  const heroSeries = trending[0];
+  useEffect(() => {
+    const fetchSeries = async () => {
+      const { data } = await supabase
+        .from('series')
+        .select('id, title_ar, title_en, slug, description_ar, description_en, poster_image, backdrop_image, release_year, genre, tags, rating, total_views, is_trending, created_at')
+        .order('created_at', { ascending: false });
+
+      if (data && data.length > 0) {
+        setAllSeries(data.map(mapSeries));
+      }
+      // If no DB data, keep mock data as fallback
+      setLoading(false);
+    };
+    fetchSeries();
+  }, []);
+
+  const trending = allSeries.filter(s => s.isTrending);
+  const popular = [...allSeries].sort((a, b) => b.totalViews - a.totalViews);
+  const latest = [...allSeries].sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+  const heroSeries = trending[0] || allSeries[0];
 
   return (
     <div className="min-h-screen bg-background">
@@ -24,23 +66,12 @@ const Index = () => {
       <main>
         <HeroBanner series={heroSeries} />
 
-        <SectionRow
-          title={t('home.trending')}
-          series={trending}
-          viewAllLink="/browse?filter=trending"
-        />
+        {trending.length > 0 && (
+          <SectionRow title={t('home.trending')} series={trending} viewAllLink="/browse?filter=trending" />
+        )}
 
-        <SectionRow
-          title={t('home.popular')}
-          series={popular}
-          viewAllLink="/browse?sort=views"
-        />
-
-        <SectionRow
-          title={t('home.latest')}
-          series={latest}
-          viewAllLink="/browse?sort=latest"
-        />
+        <SectionRow title={t('home.popular')} series={popular} viewAllLink="/browse?sort=views" />
+        <SectionRow title={t('home.latest')} series={latest} viewAllLink="/browse?sort=latest" />
 
         {/* Genre Grid */}
         <section className="py-12">
@@ -50,19 +81,9 @@ const Index = () => {
             </h2>
             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-7 gap-3">
               {genres.map((genre, i) => (
-                <motion.div
-                  key={genre.id}
-                  initial={{ opacity: 0, scale: 0.9 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  transition={{ delay: i * 0.05 }}
-                >
-                  <Link
-                    to={`/browse?genre=${genre.id}`}
-                    className="block p-4 rounded-lg bg-secondary text-center hover:bg-surface-hover hover:ring-1 hover:ring-primary/30 transition-all"
-                  >
-                    <span className="text-sm font-semibold text-secondary-foreground">
-                      {getGenreLabel(genre)}
-                    </span>
+                <motion.div key={genre.id} initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} transition={{ delay: i * 0.05 }}>
+                  <Link to={`/browse?genre=${genre.id}`} className="block p-4 rounded-lg bg-secondary text-center hover:bg-surface-hover hover:ring-1 hover:ring-primary/30 transition-all">
+                    <span className="text-sm font-semibold text-secondary-foreground">{getGenreLabel(genre)}</span>
                   </Link>
                 </motion.div>
               ))}
