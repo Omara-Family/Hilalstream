@@ -1,30 +1,17 @@
 import { Link, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { Search, Heart, Menu, X, Globe, LogOut, Shield, User } from 'lucide-react';
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAppStore } from '@/store/useAppStore';
-import { supabase } from '@/integrations/supabase/client';
 
 const Navbar = () => {
   const { t, i18n } = useTranslation();
   const [mobileOpen, setMobileOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
-  const [isAdmin, setIsAdmin] = useState(false);
   const navigate = useNavigate();
-  const { isAuthenticated, logout, user } = useAppStore();
-
-  useEffect(() => {
-    if (user) {
-      supabase.rpc('has_role', { _user_id: user.id, _role: 'admin' }).then(({ data, error }) => {
-        console.log('Navbar admin check:', { data, error, userId: user.id });
-        setIsAdmin(data === true);
-      });
-    } else {
-      setIsAdmin(false);
-    }
-  }, [user]);
+  const { isAuthenticated, logout, isAdmin } = useAppStore();
 
   const toggleLang = () => {
     i18n.changeLanguage(i18n.language === 'ar' ? 'en' : 'ar');
