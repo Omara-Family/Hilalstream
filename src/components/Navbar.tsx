@@ -1,6 +1,6 @@
 import { Link, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { Search, Heart, Menu, X, Globe, LogOut, Shield } from 'lucide-react';
+import { Search, Heart, Menu, X, Globe, LogOut, Shield, User } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAppStore } from '@/store/useAppStore';
@@ -77,6 +77,9 @@ const Navbar = () => {
 
           {isAuthenticated ? (
             <>
+              <Link to="/profile" className="hidden md:flex items-center gap-1 px-3 py-2 rounded-lg text-sm text-muted-foreground hover:text-primary transition-colors">
+                <User className="w-4 h-4" />
+              </Link>
               {isAdmin && (
                 <Link to="/admin" className="hidden md:flex items-center gap-1 px-3 py-2 rounded-lg text-sm text-primary hover:opacity-80 transition-opacity">
                   <Shield className="w-4 h-4" />
@@ -119,6 +122,10 @@ const Navbar = () => {
               ))}
               {isAuthenticated ? (
                 <>
+                  <Link to="/profile" onClick={() => setMobileOpen(false)} className="flex items-center gap-2 text-sm font-medium text-secondary-foreground hover:text-primary py-2">
+                    <User className="w-4 h-4" />
+                    الملف الشخصي
+                  </Link>
                   {isAdmin && (
                     <Link to="/admin" onClick={() => setMobileOpen(false)} className="flex items-center gap-2 text-sm font-medium text-primary py-2">
                       <Shield className="w-4 h-4" />

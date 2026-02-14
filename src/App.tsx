@@ -13,6 +13,7 @@ import Favorites from "./pages/Favorites";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
 import NotFound from "./pages/NotFound";
+import Profile from "./pages/Profile";
 import { AdminLayout } from "./components/admin/AdminLayout";
 import AdminDashboard from "./pages/admin/AdminDashboard";
 import AdminSeries from "./pages/admin/AdminSeries";
@@ -36,6 +37,7 @@ const AppInner = () => {
       <Route path="/browse" element={<Browse />} />
       <Route path="/search" element={<Browse />} />
       <Route path="/favorites" element={<Favorites />} />
+      <Route path="/profile" element={<Profile />} />
       <Route path="/login" element={<Login />} />
       <Route path="/register" element={<Register />} />
       <Route path="/admin" element={<AdminLayout />}>
