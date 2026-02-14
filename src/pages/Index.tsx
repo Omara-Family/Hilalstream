@@ -4,6 +4,8 @@ import HeroBanner from '@/components/HeroBanner';
 import SectionRow from '@/components/SectionRow';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
+import RamadanLights from '@/components/RamadanLights';
+import RamadanBanner from '@/components/RamadanBanner';
 import { mockSeries } from '@/data/mock';
 import { genres } from '@/data/mock';
 import { useLocale } from '@/hooks/useLocale';
@@ -62,7 +64,9 @@ const Index = () => {
 
   return (
     <div className="min-h-screen bg-background">
+      <RamadanLights />
       <Navbar />
+      <RamadanBanner />
       <main>
         <HeroBanner series={heroSeries} />
 

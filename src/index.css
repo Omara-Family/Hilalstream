@@ -102,6 +102,16 @@
     box-shadow: 0 0 30px hsl(43 96% 56% / 0.2), 0 0 60px hsl(43 96% 56% / 0.1);
   }
 
+  /* Ramadan star field background */
+  .ramadan-stars {
+    background-image: 
+      radial-gradient(1px 1px at 10% 20%, hsl(43 96% 56% / 0.4) 50%, transparent 50%),
+      radial-gradient(1px 1px at 30% 60%, hsl(43 96% 56% / 0.3) 50%, transparent 50%),
+      radial-gradient(1px 1px at 50% 30%, hsl(43 96% 56% / 0.2) 50%, transparent 50%),
+      radial-gradient(1px 1px at 70% 70%, hsl(43 96% 56% / 0.35) 50%, transparent 50%),
+      radial-gradient(1px 1px at 90% 40%, hsl(43 96% 56% / 0.25) 50%, transparent 50%);
+  }
+
   .line-clamp-2 {
     display: -webkit-box;
     -webkit-line-clamp: 2;
