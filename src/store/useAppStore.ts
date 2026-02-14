@@ -46,7 +46,12 @@ export const useAppStore = create<AppState>((set, get) => ({
   },
 
   logout: async () => {
-    await supabase.auth.signOut();
+    try {
+      const { error } = await supabase.auth.signOut({ scope: 'local' });
+      console.log('signOut result:', { error });
+    } catch (e) {
+      console.error('signOut exception:', e);
+    }
     set({ user: null, isAuthenticated: false, favorites: [] });
   },
 
