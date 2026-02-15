@@ -1,8 +1,8 @@
 import { useParams, Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { motion } from 'framer-motion';
-import { Star, Eye, Heart, Play, Calendar, Film } from 'lucide-react';
+import { Star, Eye, Heart, Play, Calendar, Film, Upload, ImagePlus } from 'lucide-react';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import SeriesCard from '@/components/SeriesCard';
@@ -10,6 +10,7 @@ import { mockSeries, mockEpisodes, genres } from '@/data/mock';
 import { useLocale } from '@/hooks/useLocale';
 import { useAppStore } from '@/store/useAppStore';
 import { supabase } from '@/integrations/supabase/client';
+import { toast } from 'sonner';
 import type { Series, Episode } from '@/types';
 
 const mapDbSeries = (s: any): Series => ({
@@ -51,6 +52,47 @@ const SeriesDetail = () => {
   const [episodes, setEpisodes] = useState<Episode[]>([]);
   const [related, setRelated] = useState<Series[]>([]);
   const [loading, setLoading] = useState(true);
+  const [uploading, setUploading] = useState(false);
+  const posterInputRef = useRef<HTMLInputElement>(null);
+  const backdropInputRef = useRef<HTMLInputElement>(null);
+
+  const handleImageUpload = async (file: File, type: 'poster' | 'backdrop') => {
+    if (!series) return;
+    setUploading(true);
+    try {
+      const ext = file.name.split('.').pop();
+      const path = `${series._id}/${type}.${ext}`;
+      
+      const { error: uploadError } = await supabase.storage
+        .from('posters')
+        .upload(path, file, { upsert: true });
+      
+      if (uploadError) throw uploadError;
+
+      const { data: { publicUrl } } = supabase.storage
+        .from('posters')
+        .getPublicUrl(path);
+
+      const updateCol = type === 'poster' ? 'poster_image' : 'backdrop_image';
+      const { error: dbError } = await supabase
+        .from('series')
+        .update({ [updateCol]: publicUrl })
+        .eq('id', series._id);
+
+      if (dbError) throw dbError;
+
+      setSeries(prev => prev ? {
+        ...prev,
+        ...(type === 'poster' ? { posterImage: publicUrl } : { backdropImage: publicUrl })
+      } : null);
+      
+      toast.success(type === 'poster' ? 'تم تحديث صورة البوستر' : 'تم تحديث صورة الخلفية');
+    } catch (err: any) {
+      toast.error(err.message || 'فشل رفع الصورة');
+    } finally {
+      setUploading(false);
+    }
+  };
 
   useEffect(() => {
     const fetch = async () => {
@@ -116,15 +158,33 @@ const SeriesDetail = () => {
   return (
     <div className="min-h-screen bg-background">
       <Navbar />
-      <div className="relative h-[50vh] md:h-[60vh]">
+      <div className="relative h-[50vh] md:h-[60vh] group/backdrop">
         <img src={series.backdropImage} alt={getTitle(series)} className="w-full h-full object-cover" />
         <div className="absolute inset-0 bg-gradient-to-t from-background via-background/70 to-transparent" />
+        <button
+          onClick={() => backdropInputRef.current?.click()}
+          disabled={uploading}
+          className="absolute top-4 ltr:right-4 rtl:left-4 flex items-center gap-2 px-4 py-2 rounded-lg bg-black/60 hover:bg-black/80 text-white text-sm font-medium opacity-0 group-hover/backdrop:opacity-100 transition-opacity cursor-pointer z-20"
+        >
+          <Upload className="w-4 h-4" />
+          {uploading ? '...' : 'تغيير الخلفية'}
+        </button>
+        <input ref={backdropInputRef} type="file" accept="image/*" className="hidden" onChange={e => { if (e.target.files?.[0]) handleImageUpload(e.target.files[0], 'backdrop'); }} />
       </div>
 
       <main className="container mx-auto px-4 -mt-48 relative z-10">
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="flex flex-col md:flex-row gap-8">
-          <div className="flex-shrink-0 w-48 md:w-64 mx-auto md:mx-0">
+          <div className="flex-shrink-0 w-48 md:w-64 mx-auto md:mx-0 relative group/poster">
             <img src={series.posterImage} alt={getTitle(series)} className="w-full rounded-lg shadow-2xl" />
+            <button
+              onClick={() => posterInputRef.current?.click()}
+              disabled={uploading}
+              className="absolute inset-0 flex flex-col items-center justify-center gap-2 bg-black/60 rounded-lg opacity-0 group-hover/poster:opacity-100 transition-opacity cursor-pointer"
+            >
+              <ImagePlus className="w-8 h-8 text-white" />
+              <span className="text-white text-xs font-medium">{uploading ? '...' : 'تغيير البوستر'}</span>
+            </button>
+            <input ref={posterInputRef} type="file" accept="image/*" className="hidden" onChange={e => { if (e.target.files?.[0]) handleImageUpload(e.target.files[0], 'poster'); }} />
           </div>
           <div className="flex-1">
             <h1 className="text-3xl md:text-4xl font-display font-black text-foreground mb-3">{getTitle(series)}</h1>
