@@ -207,7 +207,7 @@ const SeriesDetail = () => {
             <button
               onClick={() => backdropInputRef.current?.click()}
               disabled={uploading}
-              className="absolute top-4 ltr:right-4 rtl:left-4 flex items-center gap-2 px-4 py-2 rounded-lg bg-black/60 hover:bg-black/80 text-white text-sm font-medium transition-colors cursor-pointer z-20"
+              className="absolute bottom-4 ltr:right-4 rtl:left-4 flex items-center gap-2 px-4 py-2 rounded-lg bg-black/60 hover:bg-black/80 text-white text-sm font-medium transition-colors cursor-pointer z-20"
             >
               <Upload className="w-4 h-4" />
               {uploading ? '...' : 'تغيير الخلفية'}
