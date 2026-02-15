@@ -53,8 +53,20 @@ const SeriesDetail = () => {
   const [related, setRelated] = useState<Series[]>([]);
   const [loading, setLoading] = useState(true);
   const [uploading, setUploading] = useState(false);
+  const [isAdmin, setIsAdmin] = useState(false);
   const posterInputRef = useRef<HTMLInputElement>(null);
   const backdropInputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    const checkAdmin = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        const { data } = await supabase.rpc('has_role', { _user_id: user.id, _role: 'admin' });
+        setIsAdmin(!!data);
+      }
+    };
+    checkAdmin();
+  }, []);
 
   const resizeImage = (file: File, maxWidth: number, maxHeight: number, quality = 0.92): Promise<Blob> => {
     return new Promise((resolve, reject) => {
@@ -201,30 +213,38 @@ const SeriesDetail = () => {
       <div className="relative h-[50vh] md:h-[60vh] group/backdrop">
         <img src={series.backdropImage} alt={getTitle(series)} className="w-full h-full object-cover" />
         <div className="absolute inset-0 bg-gradient-to-t from-background via-background/70 to-transparent" />
-        <button
-          onClick={() => backdropInputRef.current?.click()}
-          disabled={uploading}
-          className="absolute top-4 ltr:right-4 rtl:left-4 flex items-center gap-2 px-4 py-2 rounded-lg bg-black/60 hover:bg-black/80 text-white text-sm font-medium transition-colors cursor-pointer z-20"
-        >
-          <Upload className="w-4 h-4" />
-          {uploading ? '...' : 'تغيير الخلفية'}
-        </button>
-        <input ref={backdropInputRef} type="file" accept="image/*" className="hidden" onChange={e => { if (e.target.files?.[0]) handleImageUpload(e.target.files[0], 'backdrop'); }} />
+        {isAdmin && (
+          <>
+            <button
+              onClick={() => backdropInputRef.current?.click()}
+              disabled={uploading}
+              className="absolute top-4 ltr:right-4 rtl:left-4 flex items-center gap-2 px-4 py-2 rounded-lg bg-black/60 hover:bg-black/80 text-white text-sm font-medium transition-colors cursor-pointer z-20"
+            >
+              <Upload className="w-4 h-4" />
+              {uploading ? '...' : 'تغيير الخلفية'}
+            </button>
+            <input ref={backdropInputRef} type="file" accept="image/*" className="hidden" onChange={e => { if (e.target.files?.[0]) handleImageUpload(e.target.files[0], 'backdrop'); }} />
+          </>
+        )}
       </div>
 
       <main className="container mx-auto px-4 -mt-48 relative z-10">
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="flex flex-col md:flex-row gap-8">
           <div className="flex-shrink-0 w-48 md:w-64 mx-auto md:mx-0 relative group/poster">
             <img src={series.posterImage} alt={getTitle(series)} className="w-full rounded-lg shadow-2xl" />
-            <button
-              onClick={() => posterInputRef.current?.click()}
-              disabled={uploading}
-              className="absolute inset-0 flex flex-col items-center justify-center gap-2 bg-black/60 rounded-lg opacity-0 group-hover/poster:opacity-100 transition-opacity cursor-pointer"
-            >
-              <ImagePlus className="w-8 h-8 text-white" />
-              <span className="text-white text-xs font-medium">{uploading ? '...' : 'تغيير البوستر'}</span>
-            </button>
-            <input ref={posterInputRef} type="file" accept="image/*" className="hidden" onChange={e => { if (e.target.files?.[0]) handleImageUpload(e.target.files[0], 'poster'); }} />
+            {isAdmin && (
+              <>
+                <button
+                  onClick={() => posterInputRef.current?.click()}
+                  disabled={uploading}
+                  className="absolute inset-0 flex flex-col items-center justify-center gap-2 bg-black/60 rounded-lg opacity-0 group-hover/poster:opacity-100 transition-opacity cursor-pointer"
+                >
+                  <ImagePlus className="w-8 h-8 text-white" />
+                  <span className="text-white text-xs font-medium">{uploading ? '...' : 'تغيير البوستر'}</span>
+                </button>
+                <input ref={posterInputRef} type="file" accept="image/*" className="hidden" onChange={e => { if (e.target.files?.[0]) handleImageUpload(e.target.files[0], 'poster'); }} />
+              </>
+            )}
           </div>
           <div className="flex-1">
             <h1 className="text-3xl md:text-4xl font-display font-black text-foreground mb-3">{getTitle(series)}</h1>
