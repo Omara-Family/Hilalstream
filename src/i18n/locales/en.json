@@ -135,6 +135,17 @@
     "roleUpdated": "Role updated",
     "updated": "Updated",
     "created": "Created",
-    "deleted": "Deleted"
+    "deleted": "Deleted",
+    "refreshAnalytics": "Refresh Analytics",
+    "analyzingData": "Analyzing platform data...",
+    "aiInsights": "AI Insights",
+    "genrePerformance": "Genre Performance",
+    "topSeriesByViews": "Top Series by Views",
+    "userGrowth": "User Growth",
+    "mostFavorited": "Most Favorited",
+    "abandonmentAnalysis": "Abandonment Analysis",
+    "contentGrowth": "Content Growth Timeline",
+    "started": "Started",
+    "abandonedShort": "Abandoned (<5min)"
   }
 }

@@ -88,7 +88,7 @@ export default function AdminDashboard() {
           className="gap-2"
         >
           <RefreshCw className={`h-4 w-4 ${loadingAi ? 'animate-spin' : ''}`} />
-          {loadingAi ? t('common.loading') : 'Refresh Analytics'}
+          {loadingAi ? t('common.loading') : t('admin.refreshAnalytics')}
         </Button>
       </div>
 
@@ -112,7 +112,7 @@ export default function AdminDashboard() {
         <Card className="bg-card border-primary/30">
           <CardHeader className="flex flex-row items-center gap-2 pb-3">
             <Brain className="h-5 w-5 text-primary" />
-            <CardTitle className="text-lg text-foreground">AI Insights</CardTitle>
+            <CardTitle className="text-lg text-foreground">{t('admin.aiInsights')}</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="text-sm text-muted-foreground whitespace-pre-wrap leading-relaxed">
@@ -130,7 +130,7 @@ export default function AdminDashboard() {
             <Card className="bg-card border-border">
               <CardHeader className="flex flex-row items-center gap-2 pb-3">
                 <BarChart3 className="h-5 w-5 text-accent" />
-                <CardTitle className="text-base text-foreground">Genre Performance</CardTitle>
+                <CardTitle className="text-base text-foreground">{t('admin.genrePerformance')}</CardTitle>
               </CardHeader>
               <CardContent>
                 <ChartContainer config={{ views: { label: 'Views', color: 'hsl(var(--primary))' } }} className="h-[250px] w-full">
@@ -160,7 +160,7 @@ export default function AdminDashboard() {
             <Card className="bg-card border-border">
               <CardHeader className="flex flex-row items-center gap-2 pb-3">
                 <TrendingUp className="h-5 w-5 text-primary" />
-                <CardTitle className="text-base text-foreground">Top Series by Views</CardTitle>
+                <CardTitle className="text-base text-foreground">{t('admin.topSeriesByViews')}</CardTitle>
               </CardHeader>
               <CardContent>
                 <ChartContainer config={{ views: { label: 'Views', color: 'hsl(var(--primary))' } }} className="h-[250px] w-full">
@@ -180,7 +180,7 @@ export default function AdminDashboard() {
             <Card className="bg-card border-border">
               <CardHeader className="flex flex-row items-center gap-2 pb-3">
                 <Users className="h-5 w-5 text-green-400" />
-                <CardTitle className="text-base text-foreground">User Growth</CardTitle>
+                <CardTitle className="text-base text-foreground">{t('admin.userGrowth')}</CardTitle>
               </CardHeader>
               <CardContent>
                 <ChartContainer config={{ count: { label: 'Users', color: 'hsl(142, 76%, 36%)' } }} className="h-[250px] w-full">
@@ -201,7 +201,7 @@ export default function AdminDashboard() {
             <Card className="bg-card border-border">
               <CardHeader className="flex flex-row items-center gap-2 pb-3">
                 <Heart className="h-5 w-5 text-red-400" />
-                <CardTitle className="text-base text-foreground">Most Favorited</CardTitle>
+                <CardTitle className="text-base text-foreground">{t('admin.mostFavorited')}</CardTitle>
               </CardHeader>
               <CardContent>
                 <ChartContainer config={{ favorites: { label: 'Favorites', color: 'hsl(340, 75%, 55%)' } }} className="h-[250px] w-full">
@@ -221,13 +221,13 @@ export default function AdminDashboard() {
             <Card className="bg-card border-border lg:col-span-2">
               <CardHeader className="flex flex-row items-center gap-2 pb-3">
                 <UserMinus className="h-5 w-5 text-orange-400" />
-                <CardTitle className="text-base text-foreground">Abandonment Analysis</CardTitle>
+                <CardTitle className="text-base text-foreground">{t('admin.abandonmentAnalysis')}</CardTitle>
               </CardHeader>
               <CardContent>
                 <ChartContainer
                   config={{
-                    started: { label: 'Started', color: 'hsl(var(--primary))' },
-                    abandoned: { label: 'Abandoned (<5min)', color: 'hsl(25, 95%, 53%)' },
+                    started: { label: t('admin.started'), color: 'hsl(var(--primary))' },
+                    abandoned: { label: t('admin.abandonedShort'), color: 'hsl(25, 95%, 53%)' },
                   }}
                   className="h-[250px] w-full"
                 >
@@ -248,7 +248,7 @@ export default function AdminDashboard() {
             <Card className="bg-card border-border lg:col-span-2">
               <CardHeader className="flex flex-row items-center gap-2 pb-3">
                 <TrendingUp className="h-5 w-5 text-blue-400" />
-                <CardTitle className="text-base text-foreground">Content Growth Timeline</CardTitle>
+                <CardTitle className="text-base text-foreground">{t('admin.contentGrowth')}</CardTitle>
               </CardHeader>
               <CardContent>
                 <ChartContainer config={{ count: { label: 'Series Added', color: 'hsl(217, 91%, 60%)' } }} className="h-[250px] w-full">
@@ -271,7 +271,7 @@ export default function AdminDashboard() {
         <div className="flex items-center justify-center py-12">
           <div className="flex items-center gap-3 text-muted-foreground">
             <RefreshCw className="h-5 w-5 animate-spin" />
-            <span>Analyzing platform data...</span>
+            <span>{t('admin.analyzingData')}</span>
           </div>
         </div>
       )}
