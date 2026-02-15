@@ -57,16 +57,13 @@ const SeriesDetail = () => {
   const posterInputRef = useRef<HTMLInputElement>(null);
   const backdropInputRef = useRef<HTMLInputElement>(null);
 
+  const user = useAppStore((s) => s.user);
+
   useEffect(() => {
-    const checkAdmin = async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (user) {
-        const { data } = await supabase.rpc('has_role', { _user_id: user.id, _role: 'admin' });
-        setIsAdmin(!!data);
-      }
-    };
-    checkAdmin();
-  }, []);
+    if (!user) { setIsAdmin(false); return; }
+    supabase.rpc('has_role', { _user_id: user.id, _role: 'admin' })
+      .then(({ data }) => setIsAdmin(!!data));
+  }, [user]);
 
   const resizeImage = (file: File, maxWidth: number, maxHeight: number, quality = 0.92): Promise<Blob> => {
     return new Promise((resolve, reject) => {
