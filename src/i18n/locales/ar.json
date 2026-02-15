@@ -61,9 +61,7 @@
     "noAccount": "ليس لديك حساب؟",
     "hasAccount": "لديك حساب بالفعل؟",
     "loginBtn": "دخول",
-    "registerBtn": "إنشاء حساب",
-    "googleSignIn": "المتابعة بحساب جوجل",
-    "orEmail": "أو المتابعة بالبريد الإلكتروني"
+    "registerBtn": "إنشاء حساب"
   },
   "common": {
     "loading": "جاري التحميل...",

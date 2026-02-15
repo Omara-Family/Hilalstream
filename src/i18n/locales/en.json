@@ -61,9 +61,7 @@
     "noAccount": "Don't have an account?",
     "hasAccount": "Already have an account?",
     "loginBtn": "Sign In",
-    "registerBtn": "Create Account",
-    "googleSignIn": "Continue with Google",
-    "orEmail": "or continue with email"
+    "registerBtn": "Create Account"
   },
   "common": {
     "loading": "Loading...",
