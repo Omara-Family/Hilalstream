@@ -135,6 +135,17 @@
     "roleUpdated": "تم تحديث الدور",
     "updated": "تم التحديث",
     "created": "تم الإنشاء",
-    "deleted": "تم الحذف"
+    "deleted": "تم الحذف",
+    "refreshAnalytics": "تحديث التحليلات",
+    "analyzingData": "جاري تحليل بيانات المنصة...",
+    "aiInsights": "رؤى الذكاء الاصطناعي",
+    "genrePerformance": "أداء الأنواع",
+    "topSeriesByViews": "أعلى المسلسلات مشاهدة",
+    "userGrowth": "نمو المستخدمين",
+    "mostFavorited": "الأكثر تفضيلاً",
+    "abandonmentAnalysis": "تحليل التخلي",
+    "contentGrowth": "الجدول الزمني لنمو المحتوى",
+    "started": "بدأ المشاهدة",
+    "abandonedShort": "تخلى (<5 دقائق)"
   }
 }
