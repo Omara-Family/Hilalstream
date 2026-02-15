@@ -53,17 +53,9 @@ const SeriesDetail = () => {
   const [related, setRelated] = useState<Series[]>([]);
   const [loading, setLoading] = useState(true);
   const [uploading, setUploading] = useState(false);
-  const [isAdmin, setIsAdmin] = useState(false);
+  const isAdmin = useAppStore((s) => s.isAdmin);
   const posterInputRef = useRef<HTMLInputElement>(null);
   const backdropInputRef = useRef<HTMLInputElement>(null);
-
-  const user = useAppStore((s) => s.user);
-
-  useEffect(() => {
-    if (!user) { setIsAdmin(false); return; }
-    supabase.rpc('has_role', { _user_id: user.id, _role: 'admin' })
-      .then(({ data }) => setIsAdmin(!!data));
-  }, [user]);
 
   const resizeImage = (file: File, maxWidth: number, maxHeight: number, quality = 0.92): Promise<Blob> => {
     return new Promise((resolve, reject) => {
