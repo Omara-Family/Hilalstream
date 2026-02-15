@@ -83,16 +83,24 @@ const Index = () => {
         <SectionRow title={t('home.latest')} series={latest} viewAllLink="/browse?sort=latest" />
 
         {/* Genre Grid */}
-        <section className="py-12">
+        <section className="py-14">
           <div className="container mx-auto px-4">
-            <h2 className="text-xl md:text-2xl font-display font-bold text-foreground mb-6">
-              {t('home.categories')}
-            </h2>
+            <div className="flex items-center gap-3 mb-8">
+              <div className="w-1 h-7 rounded-full bg-primary" />
+              <h2 className="text-xl md:text-2xl font-display font-bold text-foreground">
+                {t('home.categories')}
+              </h2>
+            </div>
             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-7 gap-3">
               {genres.map((genre, i) => (
-                <motion.div key={genre.id} initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} transition={{ delay: i * 0.05 }}>
-                  <Link to={`/browse?genre=${genre.id}`} className="block p-4 rounded-lg bg-secondary text-center hover:bg-surface-hover hover:ring-1 hover:ring-primary/30 transition-all">
-                    <span className="text-sm font-semibold text-secondary-foreground">{getGenreLabel(genre)}</span>
+                <motion.div key={genre.id} initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} transition={{ delay: i * 0.04 }}>
+                  <Link
+                    to={`/browse?genre=${genre.id}`}
+                    className="group block p-5 rounded-xl bg-secondary/60 ring-1 ring-border/50 text-center hover:ring-primary/40 hover:bg-surface-hover hover:shadow-[0_4px_20px_hsl(var(--primary)/0.1)] transition-all duration-300"
+                  >
+                    <span className="text-sm font-semibold text-secondary-foreground group-hover:text-primary transition-colors duration-200">
+                      {getGenreLabel(genre)}
+                    </span>
                   </Link>
                 </motion.div>
               ))}
