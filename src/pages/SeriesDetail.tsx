@@ -56,16 +56,56 @@ const SeriesDetail = () => {
   const posterInputRef = useRef<HTMLInputElement>(null);
   const backdropInputRef = useRef<HTMLInputElement>(null);
 
+  const resizeImage = (file: File, maxWidth: number, maxHeight: number, quality = 0.92): Promise<Blob> => {
+    return new Promise((resolve, reject) => {
+      const img = new Image();
+      img.onload = () => {
+        let { width, height } = img;
+        if (width < maxWidth && maxWidth >= 1920) {
+          const scale = maxWidth / width;
+          width = maxWidth;
+          height = Math.round(height * scale);
+        } else if (width > maxWidth) {
+          const scale = maxWidth / width;
+          width = maxWidth;
+          height = Math.round(height * scale);
+        }
+        if (height > maxHeight) {
+          const scale = maxHeight / height;
+          height = maxHeight;
+          width = Math.round(width * scale);
+        }
+        const canvas = document.createElement('canvas');
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext('2d')!;
+        ctx.imageSmoothingEnabled = true;
+        ctx.imageSmoothingQuality = 'high';
+        ctx.drawImage(img, 0, 0, width, height);
+        canvas.toBlob(
+          (blob) => blob ? resolve(blob) : reject(new Error('Canvas toBlob failed')),
+          'image/jpeg',
+          quality
+        );
+      };
+      img.onerror = () => reject(new Error('Failed to load image'));
+      img.src = URL.createObjectURL(file);
+    });
+  };
+
   const handleImageUpload = async (file: File, type: 'poster' | 'backdrop') => {
     if (!series) return;
     setUploading(true);
     try {
-      const ext = file.name.split('.').pop();
-      const path = `${series._id}/${type}.${ext}`;
+      const maxW = type === 'backdrop' ? 1920 : 800;
+      const maxH = type === 'backdrop' ? 1080 : 1200;
+      const quality = type === 'backdrop' ? 0.95 : 0.92;
+      const optimized = await resizeImage(file, maxW, maxH, quality);
+      const path = `${series._id}/${type}.jpg`;
       
       const { error: uploadError } = await supabase.storage
         .from('posters')
-        .upload(path, file, { upsert: true });
+        .upload(path, optimized, { upsert: true, contentType: 'image/jpeg' });
       
       if (uploadError) throw uploadError;
 
