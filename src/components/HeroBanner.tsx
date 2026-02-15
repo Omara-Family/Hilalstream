@@ -24,13 +24,11 @@ const HeroBanner = ({ series }: HeroBannerProps) => {
     <section className="relative h-[75vh] md:h-[90vh] flex items-end overflow-hidden">
       {/* Background with Ken Burns effect */}
       <div className="absolute inset-0">
-        <motion.img
+        <img
           src={bgImage}
           alt={title}
           className="w-full h-full object-cover"
-          initial={{ scale: 1.1 }}
-          animate={{ scale: 1 }}
-          transition={{ duration: 12, ease: "easeOut" }}
+          style={{ imageRendering: 'auto' }}
         />
         {/* Multi-layer gradients for depth */}
         <div className="absolute inset-0 bg-gradient-to-t from-background via-background/50 to-background/20" />
