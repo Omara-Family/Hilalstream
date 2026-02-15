@@ -9,6 +9,7 @@ import { mockSeries, mockEpisodes } from '@/data/mock';
 import { useLocale } from '@/hooks/useLocale';
 import { supabase } from '@/integrations/supabase/client';
 import { useAppStore } from '@/store/useAppStore';
+import { useStreak } from '@/hooks/useStreak';
 import { toast } from '@/hooks/use-toast';
 import type { Series, Episode } from '@/types';
 
@@ -34,6 +35,7 @@ const Watch = () => {
   const { getTitle } = useLocale();
   const navigate = useNavigate();
   const { user } = useAppStore();
+  const { recordWatch } = useStreak();
   const [activeServer, setActiveServer] = useState(0);
   const [series, setSeries] = useState<Series | null>(null);
   const [episodes, setEpisodes] = useState<Episode[]>([]);
@@ -69,10 +71,11 @@ const Watch = () => {
     setActiveServer(0);
   }, [seriesSlug]);
 
-  // Increment views + save continue watching when episode changes
+  // Increment views + save continue watching + record streak when episode changes
   useEffect(() => {
     if (!loading && episodes.length > 0) {
       const ep = episodes.find(e => e.episodeNumber === epNum);
+      if (ep) recordWatch();
       if (ep && ep._id.length > 10) {
         // Only call for real DB episodes (UUIDs)
         supabase.rpc('increment_episode_views', { _episode_id: ep._id }).then(() => {});

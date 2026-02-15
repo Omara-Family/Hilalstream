@@ -93,6 +93,13 @@
     "fullscreen": "F — Fullscreen",
     "next": "N — Next Episode"
   },
+  "streak": {
+    "title": "Watching Streak",
+    "current": "Current",
+    "longest": "Best",
+    "days": "days",
+    "ramadanBadge": "Ramadan Streak 🌙"
+  },
   "admin": {
     "panelTitle": "Admin Panel",
     "dashboard": "Dashboard",

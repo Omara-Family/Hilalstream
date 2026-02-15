@@ -4,6 +4,8 @@ import { Search, Heart, Menu, X, Globe, LogOut, Shield, User } from 'lucide-reac
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAppStore } from '@/store/useAppStore';
+import { useStreak } from '@/hooks/useStreak';
+import StreakBadge from '@/components/StreakBadge';
 
 const Navbar = () => {
   const { t, i18n } = useTranslation();
@@ -12,6 +14,7 @@ const Navbar = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const navigate = useNavigate();
   const { isAuthenticated, logout, isAdmin } = useAppStore();
+  const { currentStreak, longestStreak } = useStreak();
 
   const toggleLang = () => {
     i18n.changeLanguage(i18n.language === 'ar' ? 'en' : 'ar');
@@ -64,6 +67,9 @@ const Navbar = () => {
 
           {isAuthenticated ? (
             <>
+              <div className="hidden md:flex">
+                <StreakBadge currentStreak={currentStreak} longestStreak={longestStreak} />
+              </div>
               <Link to="/profile" className="hidden md:flex items-center gap-1 px-3 py-2 rounded-lg text-sm text-muted-foreground hover:text-primary transition-colors">
                 <User className="w-4 h-4" />
               </Link>
@@ -109,6 +115,9 @@ const Navbar = () => {
               ))}
               {isAuthenticated ? (
                 <>
+                  <div className="flex items-center gap-2 py-2">
+                    <StreakBadge currentStreak={currentStreak} longestStreak={longestStreak} />
+                  </div>
                   <Link to="/profile" onClick={() => setMobileOpen(false)} className="flex items-center gap-2 text-sm font-medium text-secondary-foreground hover:text-primary py-2">
                     <User className="w-4 h-4" />
                     الملف الشخصي

@@ -161,21 +161,30 @@ export type Database = {
         Row: {
           avatar_url: string | null
           created_at: string
+          current_streak: number
           id: string
+          last_watch_date: string | null
+          longest_streak: number
           name: string
           updated_at: string | null
         }
         Insert: {
           avatar_url?: string | null
           created_at?: string
+          current_streak?: number
           id: string
+          last_watch_date?: string | null
+          longest_streak?: number
           name?: string
           updated_at?: string | null
         }
         Update: {
           avatar_url?: string | null
           created_at?: string
+          current_streak?: number
           id?: string
+          last_watch_date?: string | null
+          longest_streak?: number
           name?: string
           updated_at?: string | null
         }
