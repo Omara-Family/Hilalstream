@@ -70,7 +70,7 @@ const Index = () => {
       <Navbar />
       <RamadanBanner />
       <main>
-        <HeroBanner series={heroSeries} />
+        <HeroBanner series={heroSeries} allSeries={allSeries} />
 
         <ContinueWatching />
         <Recommendations />
