@@ -1,13 +1,15 @@
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { motion } from 'framer-motion';
-import { Download, ChevronLeft, ChevronRight, Monitor, ArrowLeft } from 'lucide-react';
+import { Download, ChevronLeft, ChevronRight, Monitor, ArrowLeft, Maximize, SkipForward } from 'lucide-react';
 import Navbar from '@/components/Navbar';
+import Comments from '@/components/Comments';
 import { mockSeries, mockEpisodes } from '@/data/mock';
 import { useLocale } from '@/hooks/useLocale';
 import { supabase } from '@/integrations/supabase/client';
 import { useAppStore } from '@/store/useAppStore';
+import { toast } from '@/hooks/use-toast';
 import type { Series, Episode } from '@/types';
 
 const mapDbSeries = (s: any): Series => ({
@@ -36,6 +38,8 @@ const Watch = () => {
   const [series, setSeries] = useState<Series | null>(null);
   const [episodes, setEpisodes] = useState<Episode[]>([]);
   const [loading, setLoading] = useState(true);
+  const [showNextOverlay, setShowNextOverlay] = useState(false);
+  const playerContainerRef = useRef<HTMLDivElement>(null);
 
   const epNum = parseInt(episodeNumber || '1');
 
@@ -87,6 +91,39 @@ const Watch = () => {
     }
   }, [epNum, loading, episodes, user]);
 
+  // Keyboard shortcuts
+  const toggleFullscreen = useCallback(() => {
+    if (!playerContainerRef.current) return;
+    if (document.fullscreenElement) {
+      document.exitFullscreen();
+    } else {
+      playerContainerRef.current.requestFullscreen();
+    }
+  }, []);
+
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => {
+      if ((e.target as HTMLElement).tagName === 'INPUT' || (e.target as HTMLElement).tagName === 'TEXTAREA') return;
+      switch (e.key.toLowerCase()) {
+        case 'f':
+          e.preventDefault();
+          toggleFullscreen();
+          break;
+        case 'n':
+          if (hasNextRef.current) {
+            e.preventDefault();
+            navigate(`/watch/${seriesSlug}/${epNum + 1}`);
+          }
+          break;
+      }
+    };
+    window.addEventListener('keydown', handler);
+    return () => window.removeEventListener('keydown', handler);
+  }, [toggleFullscreen, navigate, seriesSlug, epNum]);
+
+  // We need a ref for hasNext so the keyboard handler stays current
+  const hasNextRef = useRef(false);
+
   if (loading) {
     return <div className="min-h-screen bg-background flex items-center justify-center"><div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin" /></div>;
   }
@@ -101,6 +138,7 @@ const Watch = () => {
 
   const hasPrev = epNum > 1;
   const hasNext = episodes.some(ep => ep.episodeNumber === epNum + 1);
+  hasNextRef.current = hasNext;
   const videoUrl = currentEp.videoServers[activeServer]?.url;
 
   return (
@@ -109,12 +147,23 @@ const Watch = () => {
       <main className="pt-16">
         <div className="bg-card">
           <div className="container mx-auto px-0 md:px-4">
-            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="relative w-full aspect-video bg-muted rounded-none md:rounded-lg overflow-hidden">
+            <motion.div ref={playerContainerRef} initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="relative w-full aspect-video bg-muted rounded-none md:rounded-lg overflow-hidden group">
               {videoUrl ? (
                 <iframe src={videoUrl} className="w-full h-full" allowFullScreen allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" title={getTitle(currentEp)} />
               ) : (
                 <div className="w-full h-full flex items-center justify-center text-muted-foreground">No video available</div>
               )}
+              {/* Overlay controls */}
+              <div className="absolute bottom-4 right-4 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity z-10">
+                <button onClick={toggleFullscreen} className="p-2 rounded-lg bg-background/70 text-foreground hover:bg-background/90 transition-colors backdrop-blur-sm">
+                  <Maximize className="w-5 h-5" />
+                </button>
+                {hasNext && (
+                  <button onClick={() => navigate(`/watch/${series.slug}/${epNum + 1}`)} className="px-3 py-2 rounded-lg bg-primary/90 text-primary-foreground hover:bg-primary transition-colors backdrop-blur-sm flex items-center gap-1 text-sm font-medium">
+                    <SkipForward className="w-4 h-4" /> {t('watch.nextEpisode')}
+                  </button>
+                )}
+              </div>
             </motion.div>
           </div>
         </div>
@@ -159,6 +208,9 @@ const Watch = () => {
               ))}
             </div>
           </div>
+
+          {/* Comments Section */}
+          <Comments episodeId={currentEp._id} />
         </div>
       </main>
     </div>
