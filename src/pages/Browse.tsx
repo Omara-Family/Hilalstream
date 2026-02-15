@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { useState, useMemo, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Search as SearchIcon, ArrowUpDown } from 'lucide-react';
+import { SkeletonRow } from '@/components/Skeleton';
 import Navbar from '@/components/Navbar';
 import RamadanLights from '@/components/RamadanLights';
 import RamadanBanner from '@/components/RamadanBanner';
@@ -33,7 +34,8 @@ const Browse = () => {
   const [selectedGenre, setSelectedGenre] = useState(searchParams.get('genre') || '');
   const [selectedYear, setSelectedYear] = useState(searchParams.get('year') || '');
   const [sortBy, setSortBy] = useState<SortOption>('newest');
-  const [allSeries, setAllSeries] = useState<Series[]>(mockSeries);
+const [allSeries, setAllSeries] = useState<Series[]>([]);
+  const [loading, setLoading] = useState(true);
   const [searchResults, setSearchResults] = useState<Series[] | null>(null);
 
   useEffect(() => {
@@ -42,7 +44,12 @@ const Browse = () => {
         .from('series')
         .select('id, title_ar, title_en, slug, description_ar, description_en, poster_image, backdrop_image, release_year, genre, tags, rating, total_views, is_trending, created_at')
         .order('created_at', { ascending: false });
-      if (data && data.length > 0) setAllSeries(data.map(mapDbSeries));
+      if (data && data.length > 0) {
+        setAllSeries(data.map(mapDbSeries));
+      } else {
+        setAllSeries(mockSeries);
+      }
+      setLoading(false);
     };
     fetchAll();
   }, []);
@@ -142,7 +149,13 @@ const Browse = () => {
             ))}
           </div>
 
-          {filtered.length === 0 ? (
+          {loading ? (
+            <>
+              <SkeletonRow />
+              <SkeletonRow />
+              <SkeletonRow />
+            </>
+          ) : filtered.length === 0 ? (
             <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="text-center py-20">
               <p className="text-muted-foreground text-lg">{t('search.noResults')}</p>
             </motion.div>
