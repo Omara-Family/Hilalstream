@@ -66,7 +66,7 @@ const Browse = () => {
 
   const filtered = useMemo(() => {
     let result = searchResults || allSeries;
-    if (selectedGenre) result = result.filter(s => s.genre.includes(selectedGenre));
+    if (selectedGenre) result = result.filter(s => s.genre.some(g => g.toLowerCase() === selectedGenre.toLowerCase()));
     if (selectedYear) result = result.filter(s => s.releaseYear === parseInt(selectedYear));
 
     const sorted = [...result];
