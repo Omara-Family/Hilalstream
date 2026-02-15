@@ -43,16 +43,63 @@ export default function AdminSeries() {
   const backdropRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
 
+  const resizeImage = (file: File, maxWidth: number, maxHeight: number, quality = 0.92): Promise<Blob> => {
+    return new Promise((resolve, reject) => {
+      const img = new Image();
+      img.onload = () => {
+        let { width, height } = img;
+        // Only upscale if image is smaller than target AND it's a backdrop
+        // For posters, only downscale
+        if (width < maxWidth && maxWidth >= 1920) {
+          // Upscale small backdrops to minimum 1920px
+          const scale = maxWidth / width;
+          width = maxWidth;
+          height = Math.round(height * scale);
+        } else if (width > maxWidth) {
+          // Downscale large images
+          const scale = maxWidth / width;
+          width = maxWidth;
+          height = Math.round(height * scale);
+        }
+        if (height > maxHeight) {
+          const scale = maxHeight / height;
+          height = maxHeight;
+          width = Math.round(width * scale);
+        }
+        const canvas = document.createElement('canvas');
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext('2d')!;
+        ctx.imageSmoothingEnabled = true;
+        ctx.imageSmoothingQuality = 'high';
+        ctx.drawImage(img, 0, 0, width, height);
+        canvas.toBlob(
+          (blob) => blob ? resolve(blob) : reject(new Error('Canvas toBlob failed')),
+          'image/jpeg',
+          quality
+        );
+      };
+      img.onerror = () => reject(new Error('Failed to load image'));
+      img.src = URL.createObjectURL(file);
+    });
+  };
+
   const handleUpload = async (file: File, type: 'poster' | 'backdrop') => {
     setUploading(type);
     try {
-      const ext = file.name.split('.').pop();
-      const path = `${Date.now()}-${type}.${ext}`;
-      const { error } = await supabase.storage.from('posters').upload(path, file, { upsert: true });
+      const maxW = type === 'backdrop' ? 1920 : 800;
+      const maxH = type === 'backdrop' ? 1080 : 1200;
+      const quality = type === 'backdrop' ? 0.95 : 0.92;
+      const optimized = await resizeImage(file, maxW, maxH, quality);
+      const path = `${Date.now()}-${type}.jpg`;
+      const { error } = await supabase.storage.from('posters').upload(path, optimized, {
+        upsert: true,
+        contentType: 'image/jpeg',
+      });
       if (error) throw error;
       const { data: { publicUrl } } = supabase.storage.from('posters').getPublicUrl(path);
       f(type === 'poster' ? 'poster_image' : 'backdrop_image', publicUrl);
-      toast({ title: isAr ? 'تم رفع الصورة ✓' : 'Image uploaded ✓' });
+      toast({ title: isAr ? 'تم رفع وتحسين الصورة ✓' : 'Image optimized & uploaded ✓' });
     } catch (e: any) {
       toast({ title: isAr ? 'فشل الرفع' : 'Upload failed', description: e.message, variant: 'destructive' });
     } finally {
