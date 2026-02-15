@@ -7,6 +7,7 @@ import Footer from '@/components/Footer';
 import RamadanLights from '@/components/RamadanLights';
 import RamadanBanner from '@/components/RamadanBanner';
 import ContinueWatching from '@/components/ContinueWatching';
+import Recommendations from '@/components/Recommendations';
 import { mockSeries } from '@/data/mock';
 import { genres } from '@/data/mock';
 import { useLocale } from '@/hooks/useLocale';
@@ -72,6 +73,7 @@ const Index = () => {
         <HeroBanner series={heroSeries} />
 
         <ContinueWatching />
+        <Recommendations />
 
         {trending.length > 0 && (
           <SectionRow title={t('home.trending')} series={trending} viewAllLink="/browse?filter=trending" />
