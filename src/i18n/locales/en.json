@@ -82,6 +82,17 @@
     "privacy": "Privacy Policy",
     "terms": "Terms of Service"
   },
+  "comments": {
+    "title": "Comments",
+    "placeholder": "Write a comment...",
+    "loginRequired": "Login to leave a comment.",
+    "empty": "No comments yet. Be the first!"
+  },
+  "shortcuts": {
+    "toast": "Keyboard Shortcuts",
+    "fullscreen": "F — Fullscreen",
+    "next": "N — Next Episode"
+  },
   "admin": {
     "panelTitle": "Admin Panel",
     "dashboard": "Dashboard",
