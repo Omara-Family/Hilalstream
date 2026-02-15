@@ -1,1 +1,13 @@
 project_id = "yqoxcaqhugqyeesyloiq"
+
+[functions.admin-ai]
+verify_jwt = false
+
+[functions.recommendations]
+verify_jwt = false
+
+[functions.stream-proxy]
+verify_jwt = false
+
+[functions.admin-analytics]
+verify_jwt = false
