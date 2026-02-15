@@ -1,6 +1,7 @@
 import { useTranslation } from 'react-i18next';
 import { useEffect, useState } from 'react';
 import HeroBanner from '@/components/HeroBanner';
+import { SkeletonHero, SkeletonRow } from '@/components/Skeleton';
 import SectionRow from '@/components/SectionRow';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
@@ -40,7 +41,7 @@ const mapSeries = (s: DbSeries) => ({
 const Index = () => {
   const { t } = useTranslation();
   const { getGenreLabel } = useLocale();
-  const [allSeries, setAllSeries] = useState(mockSeries);
+  const [allSeries, setAllSeries] = useState<ReturnType<typeof mapSeries>[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -52,8 +53,10 @@ const Index = () => {
 
       if (data && data.length > 0) {
         setAllSeries(data.map(mapSeries));
+      } else {
+        // Fallback to mock only if DB has no data
+        setAllSeries(mockSeries);
       }
-      // If no DB data, keep mock data as fallback
       setLoading(false);
     };
     fetchSeries();
@@ -70,17 +73,26 @@ const Index = () => {
       <Navbar />
       <RamadanBanner />
       <main>
-        <HeroBanner series={heroSeries} allSeries={allSeries} />
+        {loading ? (
+          <>
+            <SkeletonHero />
+            <SkeletonRow />
+            <SkeletonRow />
+            <SkeletonRow />
+          </>
+        ) : (
+          <>
+            <HeroBanner series={heroSeries} allSeries={allSeries} />
 
-        <ContinueWatching />
-        <Recommendations />
+            <ContinueWatching />
+            <Recommendations />
 
-        {trending.length > 0 && (
-          <SectionRow title={t('home.trending')} series={trending} viewAllLink="/browse?filter=trending" />
-        )}
+            {trending.length > 0 && (
+              <SectionRow title={t('home.trending')} series={trending} viewAllLink="/browse?filter=trending" />
+            )}
 
-        <SectionRow title={t('home.popular')} series={popular} viewAllLink="/browse?sort=views" />
-        <SectionRow title={t('home.latest')} series={latest} viewAllLink="/browse?sort=latest" />
+            <SectionRow title={t('home.popular')} series={popular} viewAllLink="/browse?sort=views" />
+            <SectionRow title={t('home.latest')} series={latest} viewAllLink="/browse?sort=latest" />
 
         {/* Genre Grid */}
         <section className="py-14">
@@ -107,6 +119,8 @@ const Index = () => {
             </div>
           </div>
         </section>
+          </>
+        )}
       </main>
       <Footer />
     </div>
