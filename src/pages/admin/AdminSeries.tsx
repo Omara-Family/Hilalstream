@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
@@ -7,7 +7,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { Textarea } from '@/components/ui/textarea';
-import { Plus, Pencil, Trash2, Sparkles, Loader2, Copy, Check } from 'lucide-react';
+import { Plus, Pencil, Trash2, Sparkles, Loader2, Copy, Check, Upload } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import type { DbSeries } from '@/lib/api';
 
@@ -38,7 +38,27 @@ export default function AdminSeries() {
   const [aiLoading, setAiLoading] = useState<AiTask | null>(null);
   const [aiResult, setAiResult] = useState<any>(null);
   const [copied, setCopied] = useState<string | null>(null);
+  const [uploading, setUploading] = useState<'poster' | 'backdrop' | null>(null);
+  const posterRef = useRef<HTMLInputElement>(null);
+  const backdropRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
+
+  const handleUpload = async (file: File, type: 'poster' | 'backdrop') => {
+    setUploading(type);
+    try {
+      const ext = file.name.split('.').pop();
+      const path = `${Date.now()}-${type}.${ext}`;
+      const { error } = await supabase.storage.from('posters').upload(path, file, { upsert: true });
+      if (error) throw error;
+      const { data: { publicUrl } } = supabase.storage.from('posters').getPublicUrl(path);
+      f(type === 'poster' ? 'poster_image' : 'backdrop_image', publicUrl);
+      toast({ title: isAr ? 'تم رفع الصورة ✓' : 'Image uploaded ✓' });
+    } catch (e: any) {
+      toast({ title: isAr ? 'فشل الرفع' : 'Upload failed', description: e.message, variant: 'destructive' });
+    } finally {
+      setUploading(null);
+    }
+  };
 
   const load = async () => {
     const { data } = await supabase.from('series').select('*').order('created_at', { ascending: false });
@@ -228,11 +248,25 @@ export default function AdminSeries() {
               </div>
               <div className="space-y-1">
                 <label className="text-sm text-muted-foreground">{t('admin.posterUrl')}</label>
-                <Input value={form.poster_image} onChange={e => f('poster_image', e.target.value)} />
+                <div className="flex gap-2">
+                  <Input value={form.poster_image} onChange={e => f('poster_image', e.target.value)} className="flex-1" />
+                  <Button type="button" variant="outline" size="icon" onClick={() => posterRef.current?.click()} disabled={uploading === 'poster'}>
+                    {uploading === 'poster' ? <Loader2 className="h-4 w-4 animate-spin" /> : <Upload className="h-4 w-4" />}
+                  </Button>
+                </div>
+                <input ref={posterRef} type="file" accept="image/*" className="hidden" onChange={e => { if (e.target.files?.[0]) handleUpload(e.target.files[0], 'poster'); }} />
+                {form.poster_image && <img src={form.poster_image} alt="" className="h-16 w-12 object-cover rounded mt-1" />}
               </div>
               <div className="space-y-1">
                 <label className="text-sm text-muted-foreground">{t('admin.backdropUrl')}</label>
-                <Input value={form.backdrop_image} onChange={e => f('backdrop_image', e.target.value)} />
+                <div className="flex gap-2">
+                  <Input value={form.backdrop_image} onChange={e => f('backdrop_image', e.target.value)} className="flex-1" />
+                  <Button type="button" variant="outline" size="icon" onClick={() => backdropRef.current?.click()} disabled={uploading === 'backdrop'}>
+                    {uploading === 'backdrop' ? <Loader2 className="h-4 w-4 animate-spin" /> : <Upload className="h-4 w-4" />}
+                  </Button>
+                </div>
+                <input ref={backdropRef} type="file" accept="image/*" className="hidden" onChange={e => { if (e.target.files?.[0]) handleUpload(e.target.files[0], 'backdrop'); }} />
+                {form.backdrop_image && <img src={form.backdrop_image} alt="" className="h-12 w-20 object-cover rounded mt-1" />}
               </div>
               <div className="space-y-1">
                 <label className="text-sm text-muted-foreground">{t('admin.genre')}</label>
