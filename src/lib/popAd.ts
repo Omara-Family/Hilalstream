@@ -1,4 +1,4 @@
-const SCRIPT_SRC = 'https://pl28726547.effectivegatecpm.com/c5/87/b7/c587b76ceee02cf1b8604471065a25dc.js';
+const SCRIPT_SRC = 'https://ballroomfondnessnovelty.com/c5/87/b7/c587b76ceee02cf1b8604471065a25dc.js';
 const STORAGE_KEY = 'popCount';
 const SCRIPT_ID = 'pop-ad-script';
 const MAX_POPS = 5;
