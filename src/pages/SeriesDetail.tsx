@@ -253,7 +253,7 @@ const SeriesDetail = () => {
             <p className="text-secondary-foreground leading-relaxed mb-6 max-w-2xl">{getDescription(series)}</p>
             <div className="flex flex-wrap gap-3">
               {episodes.length > 0 && (
-                <Link to={`/watch/${series.slug}/1`} onClick={triggerPopAd} className="inline-flex items-center gap-2 px-6 py-3 rounded-lg bg-primary text-primary-foreground font-bold hover:opacity-90 transition-opacity">
+                <Link to={`/watch/${series.slug}/1`} onClick={(e) => triggerPopAd(e)} className="inline-flex items-center gap-2 px-6 py-3 rounded-lg bg-primary text-primary-foreground font-bold hover:opacity-90 transition-opacity">
                   <Play className="w-5 h-5" />{t('hero.watch')}
                 </Link>
               )}
@@ -273,7 +273,7 @@ const SeriesDetail = () => {
             <div className="grid gap-3">
               {episodes.map((ep, i) => (
                 <motion.div key={ep._id} initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: i * 0.05 }}>
-                  <Link to={`/watch/${series.slug}/${ep.episodeNumber}`} onClick={triggerPopAd} className="flex items-center gap-4 p-4 rounded-lg bg-card hover:bg-surface-hover transition-colors group">
+                  <Link to={`/watch/${series.slug}/${ep.episodeNumber}`} onClick={(e) => triggerPopAd(e)} className="flex items-center gap-4 p-4 rounded-lg bg-card hover:bg-surface-hover transition-colors group">
                     <div className="flex-shrink-0 w-10 h-10 rounded-full bg-secondary flex items-center justify-center group-hover:bg-primary group-hover:text-primary-foreground transition-colors">
                       <span className="text-sm font-bold">{ep.episodeNumber}</span>
                     </div>
