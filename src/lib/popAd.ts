@@ -5,6 +5,9 @@ const SCRIPT_ID = 'pop-ad-script';
 export function triggerPopAd(): void {
   if (typeof window === 'undefined') return;
 
+  // Mobile only
+  if (window.innerWidth >= 768) return;
+
   // Once per session
   if (sessionStorage.getItem(STORAGE_KEY)) return;
 
