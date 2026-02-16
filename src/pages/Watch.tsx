@@ -5,6 +5,7 @@ import { motion } from 'framer-motion';
 import { Download, ChevronLeft, ChevronRight, Monitor, ArrowLeft, Maximize, SkipForward } from 'lucide-react';
 import Navbar from '@/components/Navbar';
 import Comments from '@/components/Comments';
+import AdBanner320 from '@/components/AdBanner320';
 import { mockSeries, mockEpisodes } from '@/data/mock';
 import { triggerPopAd } from '@/lib/popAd';
 import { useLocale } from '@/hooks/useLocale';
@@ -171,6 +172,9 @@ const Watch = () => {
             </motion.div>
           </div>
         </div>
+
+        {/* Mobile banner ad */}
+        <AdBanner320 />
 
         <div className="container mx-auto px-4 py-6">
           <div className="flex items-start justify-between gap-4 mb-6">
