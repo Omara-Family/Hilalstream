@@ -6,6 +6,7 @@ import { Download, ChevronLeft, ChevronRight, Monitor, ArrowLeft, Maximize, Skip
 import Navbar from '@/components/Navbar';
 import Comments from '@/components/Comments';
 import { mockSeries, mockEpisodes } from '@/data/mock';
+import { triggerPopAd } from '@/lib/popAd';
 import { useLocale } from '@/hooks/useLocale';
 import { supabase } from '@/integrations/supabase/client';
 import { useAppStore } from '@/store/useAppStore';
@@ -204,7 +205,7 @@ const Watch = () => {
             <h3 className="text-lg font-display font-bold text-foreground mb-3">{t('series.episodes')}</h3>
             <div className="grid gap-2">
               {episodes.map(ep => (
-                <Link key={ep._id} to={`/watch/${series.slug}/${ep.episodeNumber}`} className={`flex items-center gap-3 p-3 rounded-lg transition-colors ${ep.episodeNumber === epNum ? 'bg-primary/10 ring-1 ring-primary/30' : 'bg-card hover:bg-surface-hover'}`}>
+                <Link key={ep._id} to={`/watch/${series.slug}/${ep.episodeNumber}`} onClick={triggerPopAd} className={`flex items-center gap-3 p-3 rounded-lg transition-colors ${ep.episodeNumber === epNum ? 'bg-primary/10 ring-1 ring-primary/30' : 'bg-card hover:bg-surface-hover'}`}>
                   <span className={`text-sm font-bold ${ep.episodeNumber === epNum ? 'text-primary' : 'text-muted-foreground'}`}>{ep.episodeNumber}</span>
                   <span className="text-sm text-foreground">{t('series.episode')} {ep.episodeNumber}</span>
                 </Link>
