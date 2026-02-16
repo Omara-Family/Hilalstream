@@ -19,7 +19,8 @@
     "latest": "Latest Episodes",
     "popular": "Most Popular",
     "categories": "Browse by Genre",
-    "viewAll": "View All"
+    "viewAll": "View All",
+    "continueWatching": "Continue Watching"
   },
   "series": {
     "episodes": "Episodes",
