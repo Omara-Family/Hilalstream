@@ -13,10 +13,10 @@ interface Step {
 
 const STEPS: Step[] = [
   {
-    title_en: 'Welcome to HilalStream! ☪',
-    title_ar: 'مرحباً بك في هلال ستريم! ☪',
-    desc_en: 'Your home for the best Islamic and Arabic series. Let us show you around!',
-    desc_ar: 'وجهتك لأفضل المسلسلات العربية والإسلامية. دعنا نعرّفك على الموقع!',
+    title_en: 'Welcome to HilalStream!',
+    title_ar: 'مرحباً بك في هلال ستريم!',
+    desc_en: 'Your home for the best Arabic and global series. Let us show you around!',
+    desc_ar: 'وجهتك لأفضل المسلسلات العربية والعالمية. دعنا نعرّفك على الموقع!',
     icon: <Play className="w-6 h-6" />,
   },
   {
