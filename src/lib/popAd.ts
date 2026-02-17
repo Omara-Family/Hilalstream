@@ -24,8 +24,10 @@ function ensureScriptLoaded(): void {
   document.body.appendChild(script);
 }
 
-// Load the script as soon as this module is imported
-ensureScriptLoaded();
+// Delay script load to allow admin status to be set in sessionStorage
+if (typeof window !== 'undefined') {
+  setTimeout(() => ensureScriptLoaded(), 2000);
+}
 
 /**
  * Call this on user click events (e.g. Watch Now, Episode links).
