@@ -44,7 +44,7 @@ const HeroBanner = ({ series, allSeries }: HeroBannerProps) => {
   }, [goNext, list.length]);
 
   return (
-    <section className="relative h-[75vh] md:h-[90vh] flex items-end overflow-hidden">
+    <section className="relative h-[75vh] md:h-[90vh] flex items-end overflow-hidden hero-section">
       {/* Background */}
       <AnimatePresence mode="wait">
         <motion.div
@@ -61,8 +61,8 @@ const HeroBanner = ({ series, allSeries }: HeroBannerProps) => {
             className="w-full h-full object-cover"
             style={{ imageRendering: 'auto' }}
           />
-          <div className="absolute inset-0 bg-gradient-to-t from-background via-background/50 to-background/20" />
-          <div className="absolute inset-0 bg-gradient-to-r from-background/90 via-background/30 to-transparent" />
+          <div className="absolute inset-0 bg-gradient-to-t from-black via-black/50 to-black/20" />
+          <div className="absolute inset-0 bg-gradient-to-r from-black/90 via-black/30 to-transparent" />
           <div className="absolute bottom-0 inset-x-0 h-32 bg-gradient-to-t from-background to-transparent" />
         </motion.div>
       </AnimatePresence>
@@ -121,24 +121,24 @@ const HeroBanner = ({ series, allSeries }: HeroBannerProps) => {
               </span>
             )}
 
-            <h1 className="text-5xl md:text-7xl font-display font-black text-foreground leading-[1.1] mb-5 tracking-tight">
+            <h1 className="text-5xl md:text-7xl font-display font-black text-white leading-[1.1] mb-5 tracking-tight drop-shadow-lg">
               {title}
             </h1>
 
             {current && (
-              <div className="flex items-center gap-3 mb-5 text-sm text-muted-foreground">
+              <div className="flex items-center gap-3 mb-5 text-sm text-white/70">
                 <span className="flex items-center gap-1 text-primary font-semibold">
                   <Star className="w-4 h-4 fill-primary" />
                   {current.rating.toFixed(1)}
                 </span>
-                <span className="w-1 h-1 rounded-full bg-muted-foreground/50" />
+                <span className="w-1 h-1 rounded-full bg-white/40" />
                 <span>{current.releaseYear}</span>
-                <span className="w-1 h-1 rounded-full bg-muted-foreground/50" />
+                <span className="w-1 h-1 rounded-full bg-white/40" />
                 <span>{current.genre?.slice(0, 2).join(' · ')}</span>
               </div>
             )}
 
-            <p className="text-base md:text-lg text-secondary-foreground/80 line-clamp-3 mb-8 max-w-lg leading-relaxed">
+            <p className="text-base md:text-lg text-white/75 line-clamp-3 mb-8 max-w-lg leading-relaxed drop-shadow">
               {desc}
             </p>
 
@@ -155,7 +155,7 @@ const HeroBanner = ({ series, allSeries }: HeroBannerProps) => {
               {current && (
                 <Link
                   to={`/series/${current.slug}`}
-                  className="inline-flex items-center gap-2.5 px-8 py-3.5 rounded-xl bg-secondary/80 backdrop-blur-sm ring-1 ring-border text-secondary-foreground font-bold text-base hover:bg-surface-hover hover:ring-primary/30 transition-all duration-300"
+                  className="inline-flex items-center gap-2.5 px-8 py-3.5 rounded-xl bg-white/15 backdrop-blur-sm ring-1 ring-white/20 text-white font-bold text-base hover:bg-white/25 hover:ring-white/40 transition-all duration-300"
                 >
                   <Info className="w-5 h-5" />
                   {t('hero.details')}
