@@ -1,7 +1,7 @@
 import { useParams, Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useEffect, useState, useRef } from 'react';
-
+import { initPopAd } from '@/lib/popAd';
 import { motion } from 'framer-motion';
 import { Star, Eye, Heart, Play, Calendar, Film, Upload, ImagePlus } from 'lucide-react';
 import Navbar from '@/components/Navbar';
@@ -135,6 +135,8 @@ const SeriesDetail = () => {
       setUploading(false);
     }
   };
+
+  useEffect(() => { initPopAd(); }, []);
 
   useEffect(() => {
     const fetch = async () => {

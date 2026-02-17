@@ -10,6 +10,7 @@ import RamadanBanner from '@/components/RamadanBanner';
 import ContinueWatching from '@/components/ContinueWatching';
 import Recommendations from '@/components/Recommendations';
 import { mockSeries } from '@/data/mock';
+import { initPopAd } from '@/lib/popAd';
 import { genres } from '@/data/mock';
 import { useLocale } from '@/hooks/useLocale';
 import { Link } from 'react-router-dom';
@@ -43,6 +44,8 @@ const Index = () => {
   const { getGenreLabel } = useLocale();
   const [allSeries, setAllSeries] = useState<ReturnType<typeof mapSeries>[]>([]);
   const [loading, setLoading] = useState(true);
+
+  useEffect(() => { initPopAd(); }, []);
 
   useEffect(() => {
     const fetchSeries = async () => {
