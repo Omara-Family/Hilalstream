@@ -152,10 +152,10 @@
   }
 
   .light .glass {
-    background: hsl(0 0% 100% / 0.85);
-    backdrop-filter: blur(20px);
-    border-bottom: 1px solid hsl(var(--border) / 0.6);
-    box-shadow: 0 1px 3px hsl(0 0% 0% / 0.05);
+    background: hsl(220 14% 98% / 0.6);
+    backdrop-filter: blur(24px);
+    border-bottom: 1px solid hsl(var(--border) / 0.4);
+    box-shadow: 0 1px 8px hsl(0 0% 0% / 0.03);
   }
 
   .light .text-gradient-gold {
