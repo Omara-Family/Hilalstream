@@ -23,38 +23,35 @@ serve(async (req) => {
     const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const supabase = createClient(supabaseUrl, serviceRoleKey);
 
-    // Get all users who favorited this series
-    const { data: favorites, error: favError } = await supabase
-      .from("favorites")
-      .select("user_id")
-      .eq("series_id", series_id);
+    // Get ALL users from auth
+    const { data: authUsers, error: authError } = await supabase.auth.admin.listUsers({ perPage: 1000 });
+    if (authError) throw authError;
 
-    if (favError) throw favError;
-    if (!favorites || favorites.length === 0) {
-      return new Response(JSON.stringify({ success: true, sent: 0, message: "No users favorited this series" }), {
+    const allUsers = authUsers?.users || [];
+    if (allUsers.length === 0) {
+      return new Response(JSON.stringify({ success: true, sent: 0, message: "No users found" }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
-    const userIds = favorites.map((f: any) => f.user_id);
+    const allUserIds = allUsers.map((u: any) => u.id);
 
-    // Get user emails from auth.users using admin API
-    const emails: { email: string; name: string }[] = [];
-    for (const userId of userIds) {
-      const { data: userData } = await supabase.auth.admin.getUserById(userId);
-      if (userData?.user?.email) {
-        // Get profile name
-        const { data: profile } = await supabase
-          .from("profiles")
-          .select("name")
-          .eq("id", userId)
-          .single();
-        emails.push({
-          email: userData.user.email,
-          name: profile?.name || "Viewer",
-        });
-      }
-    }
+    // Get profile names for all users
+    const { data: profiles } = await supabase
+      .from("profiles")
+      .select("id, name")
+      .in("id", allUserIds);
+
+    const profileMap = new Map((profiles || []).map((p: any) => [p.id, p.name]));
+
+    const emails = allUsers
+      .filter((u: any) => u.email)
+      .map((u: any) => ({
+        email: u.email!,
+        name: profileMap.get(u.id) || "Viewer",
+      }));
+
+    const userIds = allUserIds;
 
     if (emails.length === 0) {
       return new Response(JSON.stringify({ success: true, sent: 0, message: "No emails to send" }), {
