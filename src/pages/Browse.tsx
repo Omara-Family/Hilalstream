@@ -10,6 +10,7 @@ import RamadanBanner from '@/components/RamadanBanner';
 import Footer from '@/components/Footer';
 import SeriesCard from '@/components/SeriesCard';
 import { mockSeries, genres } from '@/data/mock';
+import { initPopAd } from '@/lib/popAd';
 import { useLocale } from '@/hooks/useLocale';
 import { supabase } from '@/integrations/supabase/client';
 import type { Series } from '@/types';
@@ -37,6 +38,8 @@ const Browse = () => {
 const [allSeries, setAllSeries] = useState<Series[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchResults, setSearchResults] = useState<Series[] | null>(null);
+
+  useEffect(() => { initPopAd(); }, []);
 
   useEffect(() => {
     const fetchAll = async () => {

@@ -56,8 +56,11 @@ export function allowPopAdScript(): void {
   sessionStorage.removeItem('on-watch-page');
 }
 
-// Delay script load to allow admin status to be set in sessionStorage
-if (typeof window !== 'undefined') {
+/** Call from non-Watch pages to load the popunder script */
+export function initPopAd(): void {
+  if (typeof window === 'undefined') return;
+  if (isAdmin()) return;
+  if (isWatchPage()) return;
   setTimeout(() => ensureScriptLoaded(), 2000);
 }
 
