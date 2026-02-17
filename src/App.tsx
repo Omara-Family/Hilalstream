@@ -23,6 +23,10 @@ import AdminDashboard from "./pages/admin/AdminDashboard";
 import AdminSeries from "./pages/admin/AdminSeries";
 import AdminEpisodes from "./pages/admin/AdminEpisodes";
 import AdminUsers from "./pages/admin/AdminUsers";
+import AdminPrograms from "./pages/admin/AdminPrograms";
+import AdminProgramEpisodes from "./pages/admin/AdminProgramEpisodes";
+import ProgramDetail from "./pages/ProgramDetail";
+import WatchProgram from "./pages/WatchProgram";
 
 const queryClient = new QueryClient();
 
@@ -38,6 +42,8 @@ const AppInner = () => {
       <Route path="/" element={<Index />} />
       <Route path="/series/:slug" element={<SeriesDetail />} />
       <Route path="/watch/:seriesSlug/:episodeNumber" element={<Watch />} />
+      <Route path="/program/:slug" element={<ProgramDetail />} />
+      <Route path="/watch-program/:programSlug/:episodeNumber" element={<WatchProgram />} />
       <Route path="/browse" element={<Browse />} />
       <Route path="/search" element={<Browse />} />
       <Route path="/favorites" element={<Favorites />} />
@@ -52,6 +58,8 @@ const AppInner = () => {
         <Route index element={<AdminDashboard />} />
         <Route path="series" element={<AdminSeries />} />
         <Route path="episodes" element={<AdminEpisodes />} />
+        <Route path="programs" element={<AdminPrograms />} />
+        <Route path="program-episodes" element={<AdminProgramEpisodes />} />
         <Route path="users" element={<AdminUsers />} />
       </Route>
       <Route path="*" element={<NotFound />} />

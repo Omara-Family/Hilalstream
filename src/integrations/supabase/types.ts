@@ -190,6 +190,110 @@ export type Database = {
         }
         Relationships: []
       }
+      program_episodes: {
+        Row: {
+          created_at: string
+          download_url: string | null
+          episode_number: number
+          id: string
+          program_id: string
+          title_ar: string | null
+          title_en: string | null
+          updated_at: string | null
+          video_servers: Json | null
+          views: number | null
+        }
+        Insert: {
+          created_at?: string
+          download_url?: string | null
+          episode_number: number
+          id?: string
+          program_id: string
+          title_ar?: string | null
+          title_en?: string | null
+          updated_at?: string | null
+          video_servers?: Json | null
+          views?: number | null
+        }
+        Update: {
+          created_at?: string
+          download_url?: string | null
+          episode_number?: number
+          id?: string
+          program_id?: string
+          title_ar?: string | null
+          title_en?: string | null
+          updated_at?: string | null
+          video_servers?: Json | null
+          views?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "program_episodes_program_id_fkey"
+            columns: ["program_id"]
+            isOneToOne: false
+            referencedRelation: "programs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      programs: {
+        Row: {
+          backdrop_image: string | null
+          created_at: string
+          description_ar: string | null
+          description_en: string | null
+          genre: string[] | null
+          id: string
+          is_trending: boolean | null
+          poster_image: string | null
+          rating: number | null
+          release_year: number
+          slug: string
+          tags: string[] | null
+          title_ar: string
+          title_en: string
+          total_views: number | null
+          updated_at: string | null
+        }
+        Insert: {
+          backdrop_image?: string | null
+          created_at?: string
+          description_ar?: string | null
+          description_en?: string | null
+          genre?: string[] | null
+          id?: string
+          is_trending?: boolean | null
+          poster_image?: string | null
+          rating?: number | null
+          release_year?: number
+          slug: string
+          tags?: string[] | null
+          title_ar: string
+          title_en: string
+          total_views?: number | null
+          updated_at?: string | null
+        }
+        Update: {
+          backdrop_image?: string | null
+          created_at?: string
+          description_ar?: string | null
+          description_en?: string | null
+          genre?: string[] | null
+          id?: string
+          is_trending?: boolean | null
+          poster_image?: string | null
+          rating?: number | null
+          release_year?: number
+          slug?: string
+          tags?: string[] | null
+          title_ar?: string
+          title_en?: string
+          total_views?: number | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       series: {
         Row: {
           backdrop_image: string | null
@@ -281,6 +385,10 @@ export type Database = {
         Returns: boolean
       }
       increment_episode_views: {
+        Args: { _episode_id: string }
+        Returns: undefined
+      }
+      increment_program_episode_views: {
         Args: { _episode_id: string }
         Returns: undefined
       }
