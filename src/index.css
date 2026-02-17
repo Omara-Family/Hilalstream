@@ -62,22 +62,22 @@
   }
 
   .light {
-    --background: 40 20% 97%;
-    --foreground: 240 10% 10%;
+    --background: 220 14% 96%;
+    --foreground: 240 10% 15%;
 
-    --card: 0 0% 100%;
-    --card-foreground: 240 10% 10%;
+    --card: 220 14% 98%;
+    --card-foreground: 240 10% 15%;
 
-    --popover: 0 0% 100%;
-    --popover-foreground: 240 10% 10%;
+    --popover: 220 14% 98%;
+    --popover-foreground: 240 10% 15%;
 
     --primary: 43 96% 40%;
     --primary-foreground: 0 0% 100%;
 
-    --secondary: 40 15% 92%;
+    --secondary: 220 12% 92%;
     --secondary-foreground: 240 10% 25%;
 
-    --muted: 40 10% 88%;
+    --muted: 220 10% 90%;
     --muted-foreground: 240 5% 45%;
 
     --accent: 43 80% 35%;
@@ -86,31 +86,31 @@
     --destructive: 0 72% 51%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 40 10% 85%;
-    --input: 40 10% 85%;
+    --border: 220 12% 88%;
+    --input: 220 12% 88%;
     --ring: 43 96% 40%;
 
-    --sidebar-background: 40 15% 95%;
+    --sidebar-background: 220 14% 95%;
     --sidebar-foreground: 240 10% 25%;
     --sidebar-primary: 43 96% 40%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 40 10% 90%;
+    --sidebar-accent: 220 10% 91%;
     --sidebar-accent-foreground: 240 10% 25%;
-    --sidebar-border: 40 10% 85%;
+    --sidebar-border: 220 12% 88%;
     --sidebar-ring: 43 96% 40%;
 
     --gold: 43 96% 40%;
     --gold-dim: 43 60% 30%;
     --gold-glow: 43 100% 50%;
-    --surface: 0 0% 100%;
-    --surface-hover: 40 15% 95%;
-    --surface-elevated: 40 15% 92%;
-    --overlay: 0 0% 100% / 0.8;
+    --surface: 220 14% 98%;
+    --surface-hover: 220 12% 95%;
+    --surface-elevated: 220 12% 93%;
+    --overlay: 220 14% 98% / 0.7;
     --gradient-gold: linear-gradient(135deg, hsl(43 96% 40%), hsl(35 100% 35%));
-    --gradient-dark: linear-gradient(180deg, hsl(40 20% 97%), hsl(40 15% 94%));
-    --gradient-card: linear-gradient(145deg, hsl(0 0% 100%), hsl(40 15% 97%));
-    --shadow-gold: 0 0 30px hsl(43 96% 40% / 0.1);
-    --shadow-card: 0 8px 32px hsl(0 0% 0% / 0.08);
+    --gradient-dark: linear-gradient(180deg, hsl(220 14% 96%), hsl(220 12% 94%));
+    --gradient-card: linear-gradient(145deg, hsl(220 14% 98%), hsl(220 12% 96%));
+    --shadow-gold: 0 0 30px hsl(43 96% 40% / 0.08);
+    --shadow-card: 0 8px 32px hsl(0 0% 0% / 0.05);
     --text-dim: 240 5% 55%;
   }
 }
