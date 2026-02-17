@@ -166,13 +166,14 @@ const Watch = () => {
                 <div className="w-full h-full flex items-center justify-center text-muted-foreground">No video available</div>
               )}
               {/* Overlay controls */}
-              <div className="absolute bottom-4 right-4 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity z-10">
-                <button onClick={toggleFullscreen} className="p-2 rounded-lg bg-background/70 text-foreground hover:bg-background/90 transition-colors backdrop-blur-sm">
-                  <Maximize className="w-5 h-5" />
+              {/* Mobile: always visible. Desktop: show on hover */}
+              <div className="absolute bottom-3 left-3 right-3 md:bottom-4 md:left-auto md:right-4 flex items-center justify-between md:justify-end gap-2 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity z-10">
+                <button onClick={toggleFullscreen} className="p-3 md:p-2 rounded-xl md:rounded-lg bg-background/80 text-foreground hover:bg-background/90 active:scale-95 transition-all backdrop-blur-sm touch-manipulation">
+                  <Maximize className="w-6 h-6 md:w-5 md:h-5" />
                 </button>
                 {hasNext && (
-                  <button onClick={() => navigate(`/watch/${series.slug}/${epNum + 1}`)} className="px-3 py-2 rounded-lg bg-primary/90 text-primary-foreground hover:bg-primary transition-colors backdrop-blur-sm flex items-center gap-1 text-sm font-medium">
-                    <SkipForward className="w-4 h-4" /> {t('watch.nextEpisode')}
+                  <button onClick={() => navigate(`/watch/${series.slug}/${epNum + 1}`)} className="px-4 py-3 md:px-3 md:py-2 rounded-xl md:rounded-lg bg-primary/90 text-primary-foreground hover:bg-primary active:scale-95 transition-all backdrop-blur-sm flex items-center gap-1.5 text-sm font-medium touch-manipulation">
+                    <SkipForward className="w-5 h-5 md:w-4 md:h-4" /> {t('watch.nextEpisode')}
                   </button>
                 )}
               </div>
