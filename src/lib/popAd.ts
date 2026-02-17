@@ -33,6 +33,7 @@ function ensureScriptLoaded(): void {
 }
 
 let adObserver: MutationObserver | null = null;
+let captureBlocker: ((e: MouseEvent) => void) | null = null;
 
 /** Detect and remove ad-injected overlays, iframes, and scripts */
 function cleanAdElements(): void {
@@ -40,7 +41,7 @@ function cleanAdElements(): void {
   document.querySelectorAll('iframe').forEach(iframe => {
     const src = iframe.src || '';
     if (src.includes('highperformanceformat') || src.includes('ballroomfondness') || 
-        src.includes('kettledrooping') || src.includes('everya')) {
+        src.includes('kettledrooping') || src.includes('everya') || src.includes('effectivegatecpm')) {
       iframe.remove();
     }
   });
@@ -56,7 +57,7 @@ function cleanAdElements(): void {
   });
 
   // Remove ad scripts
-  document.querySelectorAll(`script[src*="ballroomfondness"], script[src*="highperformanceformat"], script[src*="kettledrooping"]`).forEach(s => s.remove());
+  document.querySelectorAll(`script[src*="ballroomfondness"], script[src*="highperformanceformat"], script[src*="kettledrooping"], script[src*="effectivegatecpm"]`).forEach(s => s.remove());
   const popScript = document.getElementById(SCRIPT_ID);
   if (popScript) popScript.remove();
 }
@@ -71,6 +72,51 @@ export function removePopAdScript(): void {
   }
   window.open = function() { return null; } as typeof window.open;
 
+  // Block createElement for ad scripts
+  if (!(document as any).__originalCreateElement) {
+    (document as any).__originalCreateElement = document.createElement.bind(document);
+  }
+  const origCreate = (document as any).__originalCreateElement;
+  document.createElement = function(tagName: string, options?: ElementCreationOptions) {
+    const el = origCreate(tagName, options);
+    if (tagName.toLowerCase() === 'script') {
+      const origSetAttr = el.setAttribute.bind(el);
+      el.setAttribute = function(name: string, value: string) {
+        if (name === 'src' && (value.includes('ballroomfondness') || value.includes('highperformanceformat') || value.includes('kettledrooping') || value.includes('effectivegatecpm'))) {
+          return; // block ad script src
+        }
+        return origSetAttr(name, value);
+      };
+      // Also intercept .src setter
+      const descriptor = Object.getOwnPropertyDescriptor(HTMLScriptElement.prototype, 'src');
+      if (descriptor) {
+        Object.defineProperty(el, 'src', {
+          set(v: string) {
+            if (v.includes('ballroomfondness') || v.includes('highperformanceformat') || v.includes('kettledrooping') || v.includes('effectivegatecpm')) {
+              return;
+            }
+            descriptor.set?.call(el, v);
+          },
+          get() { return descriptor.get?.call(el); }
+        });
+      }
+    }
+    return el;
+  } as typeof document.createElement;
+
+  // Add capture-phase click blocker to prevent ad script click hijacking
+  if (!captureBlocker) {
+    captureBlocker = (e: MouseEvent) => {
+      // If click target is outside #root, it's likely an ad overlay — block it
+      const root = document.getElementById('root');
+      if (e.target instanceof HTMLElement && !root?.contains(e.target)) {
+        e.stopImmediatePropagation();
+        e.preventDefault();
+      }
+    };
+    document.addEventListener('click', captureBlocker, true);
+  }
+
   // Watch for new ad elements being injected and remove them immediately
   if (!adObserver) {
     adObserver = new MutationObserver((mutations) => {
@@ -83,7 +129,7 @@ export function removePopAdScript(): void {
           if (tag === 'IFRAME') {
             const src = (node as HTMLIFrameElement).src || '';
             if (src.includes('highperformanceformat') || src.includes('ballroomfondness') || 
-                src.includes('kettledrooping') || src.includes('everya')) {
+                src.includes('kettledrooping') || src.includes('everya') || src.includes('effectivegatecpm')) {
               node.remove();
               continue;
             }
@@ -104,7 +150,7 @@ export function removePopAdScript(): void {
           // Remove ad scripts
           if (tag === 'SCRIPT') {
             const src = (node as HTMLScriptElement).src || '';
-            if (src.includes('ballroomfondness') || src.includes('highperformanceformat') || src.includes('kettledrooping')) {
+            if (src.includes('ballroomfondness') || src.includes('highperformanceformat') || src.includes('kettledrooping') || src.includes('effectivegatecpm')) {
               node.remove();
             }
           }
@@ -125,6 +171,18 @@ export function allowPopAdScript(): void {
   if ((window as any).__originalOpen) {
     window.open = (window as any).__originalOpen;
     delete (window as any).__originalOpen;
+  }
+  
+  // Restore createElement
+  if ((document as any).__originalCreateElement) {
+    document.createElement = (document as any).__originalCreateElement;
+    delete (document as any).__originalCreateElement;
+  }
+  
+  // Remove capture blocker
+  if (captureBlocker) {
+    document.removeEventListener('click', captureBlocker, true);
+    captureBlocker = null;
   }
   
   // Stop observing
