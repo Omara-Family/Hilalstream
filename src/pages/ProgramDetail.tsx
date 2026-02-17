@@ -1,12 +1,14 @@
 import { useParams, Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { motion } from 'framer-motion';
-import { Star, Eye, Play, Calendar, Film } from 'lucide-react';
+import { Star, Eye, Play, Calendar, Film, Upload, ImagePlus } from 'lucide-react';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import { useLocale } from '@/hooks/useLocale';
+import { useAppStore } from '@/store/useAppStore';
 import { supabase } from '@/integrations/supabase/client';
+import { toast } from 'sonner';
 import type { Series, Episode } from '@/types';
 
 const mapDbProgram = (s: any): Series => ({
@@ -32,6 +34,88 @@ const ProgramDetail = () => {
   const [program, setProgram] = useState<Series | null>(null);
   const [episodes, setEpisodes] = useState<Episode[]>([]);
   const [loading, setLoading] = useState(true);
+  const [uploading, setUploading] = useState(false);
+  const isAdmin = useAppStore((s) => s.isAdmin);
+  const posterInputRef = useRef<HTMLInputElement>(null);
+  const backdropInputRef = useRef<HTMLInputElement>(null);
+
+  const resizeImage = (file: File, maxWidth: number, maxHeight: number, quality = 0.92): Promise<Blob> => {
+    return new Promise((resolve, reject) => {
+      const img = new Image();
+      img.onload = () => {
+        let { width, height } = img;
+        if (width < maxWidth && maxWidth >= 1920) {
+          const scale = maxWidth / width;
+          width = maxWidth;
+          height = Math.round(height * scale);
+        } else if (width > maxWidth) {
+          const scale = maxWidth / width;
+          width = maxWidth;
+          height = Math.round(height * scale);
+        }
+        if (height > maxHeight) {
+          const scale = maxHeight / height;
+          height = maxHeight;
+          width = Math.round(width * scale);
+        }
+        const canvas = document.createElement('canvas');
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext('2d')!;
+        ctx.imageSmoothingEnabled = true;
+        ctx.imageSmoothingQuality = 'high';
+        ctx.drawImage(img, 0, 0, width, height);
+        canvas.toBlob(
+          (blob) => blob ? resolve(blob) : reject(new Error('Canvas toBlob failed')),
+          'image/jpeg',
+          quality
+        );
+      };
+      img.onerror = () => reject(new Error('Failed to load image'));
+      img.src = URL.createObjectURL(file);
+    });
+  };
+
+  const handleImageUpload = async (file: File, type: 'poster' | 'backdrop') => {
+    if (!program) return;
+    setUploading(true);
+    try {
+      const maxW = type === 'backdrop' ? 1920 : 800;
+      const maxH = type === 'backdrop' ? 1080 : 1200;
+      const quality = type === 'backdrop' ? 0.95 : 0.92;
+      const optimized = await resizeImage(file, maxW, maxH, quality);
+      const path = `programs/${program._id}/${type}.jpg`;
+
+      const { error: uploadError } = await supabase.storage
+        .from('posters')
+        .upload(path, optimized, { upsert: true, contentType: 'image/jpeg' });
+
+      if (uploadError) throw uploadError;
+
+      const { data: { publicUrl } } = supabase.storage
+        .from('posters')
+        .getPublicUrl(path);
+
+      const updateCol = type === 'poster' ? 'poster_image' : 'backdrop_image';
+      const { error: dbError } = await supabase
+        .from('programs')
+        .update({ [updateCol]: publicUrl })
+        .eq('id', program._id);
+
+      if (dbError) throw dbError;
+
+      setProgram(prev => prev ? {
+        ...prev,
+        ...(type === 'poster' ? { posterImage: publicUrl } : { backdropImage: publicUrl })
+      } : null);
+
+      toast.success(type === 'poster' ? 'تم تحديث صورة البوستر' : 'تم تحديث صورة الخلفية');
+    } catch (err: any) {
+      toast.error(err.message || 'فشل رفع الصورة');
+    } finally {
+      setUploading(false);
+    }
+  };
 
   useEffect(() => {
     const fetch = async () => {
@@ -67,15 +151,41 @@ const ProgramDetail = () => {
   return (
     <div className="min-h-screen bg-background">
       <Navbar />
-      <div className="relative h-[50vh] md:h-[60vh]">
+      <div className="relative h-[50vh] md:h-[60vh] group/backdrop">
         <img src={program.backdropImage} alt={getTitle(program)} className="w-full h-full object-cover" />
         <div className="absolute inset-0 bg-gradient-to-t from-background via-background/70 to-transparent" />
+        {isAdmin && (
+          <>
+            <button
+              onClick={() => backdropInputRef.current?.click()}
+              disabled={uploading}
+              className="absolute bottom-4 ltr:right-4 rtl:left-4 flex items-center gap-2 px-4 py-2 rounded-lg bg-black/60 hover:bg-black/80 text-white text-sm font-medium transition-colors cursor-pointer z-20"
+            >
+              <Upload className="w-4 h-4" />
+              {uploading ? '...' : 'تغيير الخلفية'}
+            </button>
+            <input ref={backdropInputRef} type="file" accept="image/*" className="hidden" onChange={e => { if (e.target.files?.[0]) handleImageUpload(e.target.files[0], 'backdrop'); }} />
+          </>
+        )}
       </div>
 
       <main className="container mx-auto px-4 -mt-48 relative z-10">
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="flex flex-col md:flex-row gap-8">
-          <div className="flex-shrink-0 w-48 md:w-64 mx-auto md:mx-0">
+          <div className="flex-shrink-0 w-48 md:w-64 mx-auto md:mx-0 relative group/poster">
             <img src={program.posterImage} alt={getTitle(program)} className="w-full rounded-lg shadow-2xl" />
+            {isAdmin && (
+              <>
+                <button
+                  onClick={() => posterInputRef.current?.click()}
+                  disabled={uploading}
+                  className="absolute inset-0 flex flex-col items-center justify-center gap-2 bg-black/60 rounded-lg opacity-0 group-hover/poster:opacity-100 transition-opacity cursor-pointer"
+                >
+                  <ImagePlus className="w-8 h-8 text-white" />
+                  <span className="text-white text-xs font-medium">{uploading ? '...' : 'تغيير البوستر'}</span>
+                </button>
+                <input ref={posterInputRef} type="file" accept="image/*" className="hidden" onChange={e => { if (e.target.files?.[0]) handleImageUpload(e.target.files[0], 'poster'); }} />
+              </>
+            )}
           </div>
           <div className="flex-1">
             <h1 className="text-3xl md:text-4xl font-display font-black text-foreground mb-3">{getTitle(program)}</h1>
