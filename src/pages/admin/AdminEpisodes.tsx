@@ -60,6 +60,26 @@ export default function AdminEpisodes() {
     setOpen(true);
   };
 
+  const notifyFavoriteUsers = async (seriesId: string, episodeNumber: number, titleEn: string, titleAr: string) => {
+    try {
+      const { data: series } = await supabase.from('series').select('title_en, title_ar, slug').eq('id', seriesId).single();
+      if (!series) return;
+      await supabase.functions.invoke('notify-new-episode', {
+        body: {
+          series_id: seriesId,
+          series_title_en: series.title_en,
+          series_title_ar: series.title_ar,
+          series_slug: series.slug,
+          episode_number: episodeNumber,
+          episode_title_en: titleEn,
+          episode_title_ar: titleAr,
+        },
+      });
+    } catch (err) {
+      console.error('Notification error:', err);
+    }
+  };
+
   const save = async () => {
     let servers;
     try { servers = JSON.parse(form.video_servers); } catch {
@@ -71,13 +91,17 @@ export default function AdminEpisodes() {
       title_ar: form.title_ar, title_en: form.title_en,
       video_servers: servers, download_url: form.download_url || null,
     };
-    const { error } = editId
-      ? await supabase.from('episodes').update(payload).eq('id', editId)
-      : await supabase.from('episodes').insert(payload);
+    const isNew = !editId;
+    const { error } = isNew
+      ? await supabase.from('episodes').insert(payload)
+      : await supabase.from('episodes').update(payload).eq('id', editId);
     if (error) {
       toast({ title: t('common.error'), description: error.message, variant: 'destructive' });
     } else {
-      toast({ title: editId ? t('admin.updated') : t('admin.created') });
+      toast({ title: isNew ? t('admin.created') : t('admin.updated') });
+      if (isNew) {
+        notifyFavoriteUsers(form.series_id, form.episode_number, form.title_en, form.title_ar);
+      }
       setOpen(false); loadEpisodes();
     }
   };
