@@ -32,26 +32,87 @@ function ensureScriptLoaded(): void {
   document.body.appendChild(script);
 }
 
-/** Remove the ad script, block popunders on Watch page */
-export function removePopAdScript(): void {
-  // Remove the script element
-  const el = document.getElementById(SCRIPT_ID);
-  if (el) el.remove();
-  
-  // Remove any ad-injected iframes/elements
+let adObserver: MutationObserver | null = null;
+
+/** Detect and remove ad-injected overlays, iframes, and scripts */
+function cleanAdElements(): void {
+  // Remove ad iframes
   document.querySelectorAll('iframe').forEach(iframe => {
     const src = iframe.src || '';
     if (src.includes('highperformanceformat') || src.includes('ballroomfondness') || 
-        src.includes('kettledrooping')) {
+        src.includes('kettledrooping') || src.includes('everya')) {
       iframe.remove();
     }
   });
-  
-  // Block window.open — this is how popunders actually open new tabs/windows
+
+  // Remove fixed/absolute positioned overlays injected by ad scripts (not part of React root)
+  const root = document.getElementById('root');
+  document.body.querySelectorAll(':scope > div, :scope > iframe, :scope > ins').forEach(el => {
+    if (el === root || el.id === SCRIPT_ID) return;
+    const style = window.getComputedStyle(el);
+    if (style.position === 'fixed' || style.position === 'absolute' || style.zIndex > '999') {
+      el.remove();
+    }
+  });
+
+  // Remove ad scripts
+  document.querySelectorAll(`script[src*="ballroomfondness"], script[src*="highperformanceformat"], script[src*="kettledrooping"]`).forEach(s => s.remove());
+  const popScript = document.getElementById(SCRIPT_ID);
+  if (popScript) popScript.remove();
+}
+
+/** Remove the ad script, block popunders on Watch page + observe for new injections */
+export function removePopAdScript(): void {
+  cleanAdElements();
+
+  // Block window.open
   if (!(window as any).__originalOpen) {
     (window as any).__originalOpen = window.open;
   }
   window.open = function() { return null; } as typeof window.open;
+
+  // Watch for new ad elements being injected and remove them immediately
+  if (!adObserver) {
+    adObserver = new MutationObserver((mutations) => {
+      for (const mutation of mutations) {
+        for (const node of mutation.addedNodes) {
+          if (!(node instanceof HTMLElement)) continue;
+          const tag = node.tagName;
+          
+          // Remove injected iframes from ad networks
+          if (tag === 'IFRAME') {
+            const src = (node as HTMLIFrameElement).src || '';
+            if (src.includes('highperformanceformat') || src.includes('ballroomfondness') || 
+                src.includes('kettledrooping') || src.includes('everya')) {
+              node.remove();
+              continue;
+            }
+          }
+          
+          // Remove fixed overlays not in React root
+          if (tag === 'DIV' || tag === 'INS' || tag === 'IFRAME') {
+            const root = document.getElementById('root');
+            if (node.parentElement === document.body && node !== root) {
+              const style = window.getComputedStyle(node);
+              if (style.position === 'fixed' || style.position === 'absolute' || parseInt(style.zIndex) > 999) {
+                node.remove();
+                continue;
+              }
+            }
+          }
+          
+          // Remove ad scripts
+          if (tag === 'SCRIPT') {
+            const src = (node as HTMLScriptElement).src || '';
+            if (src.includes('ballroomfondness') || src.includes('highperformanceformat') || src.includes('kettledrooping')) {
+              node.remove();
+            }
+          }
+        }
+      }
+    });
+    adObserver.observe(document.documentElement, { childList: true, subtree: true });
+  }
   
   sessionStorage.setItem('on-watch-page', 'true');
 }
@@ -64,6 +125,12 @@ export function allowPopAdScript(): void {
   if ((window as any).__originalOpen) {
     window.open = (window as any).__originalOpen;
     delete (window as any).__originalOpen;
+  }
+  
+  // Stop observing
+  if (adObserver) {
+    adObserver.disconnect();
+    adObserver = null;
   }
 }
 
