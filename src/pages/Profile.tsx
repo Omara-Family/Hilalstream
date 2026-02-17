@@ -6,6 +6,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAppStore } from '@/store/useAppStore';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
+import BadgesDisplay from '@/components/BadgesDisplay';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -173,6 +174,11 @@ const Profile = () => {
             {saving ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <Save className="w-4 h-4 mr-2" />}
             حفظ التغييرات
           </Button>
+        </div>
+
+        {/* Badges Section */}
+        <div className="mt-8">
+          <BadgesDisplay showAll />
         </div>
       </main>
       <Footer />

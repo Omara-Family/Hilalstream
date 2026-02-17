@@ -9,6 +9,7 @@ import Footer from '@/components/Footer';
 import RamadanLights from '@/components/RamadanLights';
 import RamadanBanner from '@/components/RamadanBanner';
 import ContinueWatching from '@/components/ContinueWatching';
+import OnboardingTour from '@/components/OnboardingTour';
 import Recommendations from '@/components/Recommendations';
 import { mockSeries } from '@/data/mock';
 import { initPopAd } from '@/lib/popAd';
@@ -102,6 +103,7 @@ const Index = () => {
 
   return (
     <div className="min-h-screen bg-background">
+      <OnboardingTour />
       <RamadanLights />
       <Navbar />
       <RamadanBanner />

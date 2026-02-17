@@ -4,6 +4,8 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 import { motion } from 'framer-motion';
 import { Download, ChevronLeft, ChevronRight, Monitor, ArrowLeft, Maximize, SkipForward } from 'lucide-react';
 import Navbar from '@/components/Navbar';
+import EpisodeReviews from '@/components/EpisodeReviews';
+import WatchPartyChat from '@/components/WatchPartyChat';
 import { removePopAdScript, allowPopAdScript } from '@/lib/popAd';
 import { useLocale } from '@/hooks/useLocale';
 import { supabase } from '@/integrations/supabase/client';
@@ -170,7 +172,13 @@ const WatchProgram = () => {
               ))}
             </div>
           </div>
+
+          {/* Reviews */}
+          <EpisodeReviews episodeId={currentEp._id} programId={program._id} />
         </div>
+
+        {/* Watch Party */}
+        <WatchPartyChat seriesSlug={program.slug} episodeNumber={epNum} episodeId={currentEp._id} />
       </main>
     </div>
   );

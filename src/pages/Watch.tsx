@@ -5,6 +5,8 @@ import { motion } from 'framer-motion';
 import { Download, ChevronLeft, ChevronRight, Monitor, ArrowLeft, Maximize, SkipForward } from 'lucide-react';
 import Navbar from '@/components/Navbar';
 import Comments from '@/components/Comments';
+import EpisodeReviews from '@/components/EpisodeReviews';
+import WatchPartyChat from '@/components/WatchPartyChat';
 import { mockSeries, mockEpisodes } from '@/data/mock';
 import { removePopAdScript, allowPopAdScript } from '@/lib/popAd';
 import { useLocale } from '@/hooks/useLocale';
@@ -220,9 +222,15 @@ const Watch = () => {
             </div>
           </div>
 
+          {/* Reviews Section */}
+          <EpisodeReviews episodeId={currentEp._id} seriesId={series._id} />
+
           {/* Comments Section */}
           <Comments episodeId={currentEp._id} />
         </div>
+
+        {/* Watch Party */}
+        <WatchPartyChat seriesSlug={series.slug} episodeNumber={epNum} episodeId={currentEp._id} />
       </main>
     </div>
   );
