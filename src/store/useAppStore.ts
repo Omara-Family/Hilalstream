@@ -81,8 +81,10 @@ export const useAppStore = create<AppState>((set, get) => ({
           checkAdmin(user.id),
         ]);
         set({ favorites: favs, isAdmin: admin });
+        sessionStorage.setItem('app-admin', JSON.stringify(admin));
       } else {
         set({ favorites: [], isAdmin: false });
+        sessionStorage.setItem('app-admin', 'false');
       }
     };
 
