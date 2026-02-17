@@ -196,6 +196,41 @@ export type Database = {
         }
         Relationships: []
       }
+      party_messages: {
+        Row: {
+          created_at: string
+          id: string
+          message: string
+          party_id: string
+          user_id: string
+          user_name: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          message: string
+          party_id: string
+          user_id: string
+          user_name?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          message?: string
+          party_id?: string
+          user_id?: string
+          user_name?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "party_messages_party_id_fkey"
+            columns: ["party_id"]
+            isOneToOne: false
+            referencedRelation: "watch_parties"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           avatar_url: string | null
@@ -333,6 +368,42 @@ export type Database = {
         }
         Relationships: []
       }
+      reviews: {
+        Row: {
+          created_at: string
+          episode_id: string
+          id: string
+          program_id: string | null
+          rating: number
+          review_text: string | null
+          series_id: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          episode_id: string
+          id?: string
+          program_id?: string | null
+          rating: number
+          review_text?: string | null
+          series_id?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          episode_id?: string
+          id?: string
+          program_id?: string | null
+          rating?: number
+          review_text?: string | null
+          series_id?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       series: {
         Row: {
           backdrop_image: string | null
@@ -393,6 +464,27 @@ export type Database = {
         }
         Relationships: []
       }
+      user_badges: {
+        Row: {
+          badge_id: string
+          earned_at: string
+          id: string
+          user_id: string
+        }
+        Insert: {
+          badge_id: string
+          earned_at?: string
+          id?: string
+          user_id: string
+        }
+        Update: {
+          badge_id?: string
+          earned_at?: string
+          id?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       user_roles: {
         Row: {
           id: string
@@ -408,6 +500,42 @@ export type Database = {
           id?: string
           role?: Database["public"]["Enums"]["app_role"]
           user_id?: string
+        }
+        Relationships: []
+      }
+      watch_parties: {
+        Row: {
+          code: string
+          created_at: string
+          current_time_seconds: number
+          episode_id: string
+          episode_number: number
+          host_id: string
+          id: string
+          is_active: boolean
+          series_slug: string
+        }
+        Insert: {
+          code?: string
+          created_at?: string
+          current_time_seconds?: number
+          episode_id: string
+          episode_number?: number
+          host_id: string
+          id?: string
+          is_active?: boolean
+          series_slug: string
+        }
+        Update: {
+          code?: string
+          created_at?: string
+          current_time_seconds?: number
+          episode_id?: string
+          episode_number?: number
+          host_id?: string
+          id?: string
+          is_active?: boolean
+          series_slug?: string
         }
         Relationships: []
       }
