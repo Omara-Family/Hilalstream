@@ -18,6 +18,7 @@ import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { supabase } from '@/integrations/supabase/client';
 import type { Tables } from '@/integrations/supabase/types';
+import DailyReminder from '@/components/DailyReminder';
 
 type DbSeries = Tables<'series'>;
 
@@ -115,6 +116,8 @@ const Index = () => {
         ) : (
           <>
             <HeroBanner series={heroSeries} allSeries={allSeries} />
+
+            <DailyReminder />
 
             <ContinueWatching />
             <Recommendations />

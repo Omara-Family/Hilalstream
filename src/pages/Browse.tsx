@@ -2,7 +2,7 @@ import { useSearchParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useState, useMemo, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { Search as SearchIcon, ArrowUpDown } from 'lucide-react';
+import { Search as SearchIcon, ArrowUpDown, SlidersHorizontal, X as XIcon } from 'lucide-react';
 import { SkeletonRow } from '@/components/Skeleton';
 import Navbar from '@/components/Navbar';
 import RamadanLights from '@/components/RamadanLights';
@@ -97,6 +97,8 @@ const [allSeries, setAllSeries] = useState<Series[]>([]);
     { value: 'views', label: isAr ? 'المشاهدات' : 'Views' },
   ];
 
+  const activeFilters = [selectedGenre, selectedYear].filter(Boolean).length;
+
   return (
     <div className="min-h-screen bg-background">
       <RamadanLights />
@@ -104,36 +106,57 @@ const [allSeries, setAllSeries] = useState<Series[]>([]);
       <RamadanBanner />
       <main className="pt-24 pb-12">
         <div className="container mx-auto px-4">
-          <h1 className="text-2xl md:text-3xl font-display font-bold text-foreground mb-6">
-            {query ? `${t('search.results')} "${query}"` : t('nav.browse')}
-          </h1>
-
-          {/* Search + Year + Sort row */}
-          <div className="flex flex-col sm:flex-row gap-3 mb-4">
-            <div className="relative flex-1 max-w-md">
-              <SearchIcon className="absolute start-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-              <input value={query} onChange={e => setQuery(e.target.value)} placeholder={t('search.placeholder')} className="w-full ps-10 pe-4 py-3 rounded-lg bg-secondary text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary text-sm" />
+          {/* Header */}
+          <div className="flex items-center justify-between mb-8">
+            <div>
+              <h1 className="text-2xl md:text-3xl font-display font-bold text-foreground">
+                {query ? `${t('search.results')} "${query}"` : t('nav.browse')}
+              </h1>
+              {!query && (
+                <p className="text-sm text-muted-foreground mt-1">
+                  {isAr ? `${filtered.length} نتيجة` : `${filtered.length} results`}
+                </p>
+              )}
             </div>
-            <select value={selectedYear} onChange={e => setSelectedYear(e.target.value)} className="px-4 py-3 rounded-lg bg-secondary text-secondary-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary">
-              <option value="">{t('search.allYears')}</option>
-              {years.map(y => <option key={y} value={y}>{y}</option>)}
-            </select>
-            <div className="flex items-center gap-2 px-4 py-3 rounded-lg bg-secondary text-secondary-foreground text-sm">
-              <ArrowUpDown className="w-4 h-4 text-muted-foreground shrink-0" />
-              <select value={sortBy} onChange={e => setSortBy(e.target.value as SortOption)} className="bg-transparent focus:outline-none">
-                {sortOptions.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
+            {activeFilters > 0 && (
+              <button
+                onClick={() => { setSelectedGenre(''); setSelectedYear(''); setQuery(''); }}
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-destructive/10 text-destructive text-xs font-medium hover:bg-destructive/20 transition-colors"
+              >
+                <XIcon className="w-3 h-3" />
+                {isAr ? 'مسح الفلاتر' : 'Clear filters'}
+              </button>
+            )}
+          </div>
+
+          {/* Search + Filters Bar */}
+          <div className="bg-card/50 backdrop-blur-sm rounded-xl border border-border/50 p-4 mb-6">
+            <div className="flex flex-col sm:flex-row gap-3">
+              <div className="relative flex-1">
+                <SearchIcon className="absolute start-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                <input value={query} onChange={e => setQuery(e.target.value)} placeholder={t('search.placeholder')} className="w-full ps-10 pe-4 py-3 rounded-lg bg-secondary/50 text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/50 text-sm border border-transparent focus:border-primary/30 transition-all" />
+              </div>
+              <select value={selectedYear} onChange={e => setSelectedYear(e.target.value)} className="px-4 py-3 rounded-lg bg-secondary/50 text-secondary-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary/50 border border-transparent focus:border-primary/30 transition-all">
+                <option value="">{t('search.allYears')}</option>
+                {years.map(y => <option key={y} value={y}>{y}</option>)}
               </select>
+              <div className="flex items-center gap-2 px-4 py-3 rounded-lg bg-secondary/50 text-secondary-foreground text-sm border border-transparent">
+                <ArrowUpDown className="w-4 h-4 text-muted-foreground shrink-0" />
+                <select value={sortBy} onChange={e => setSortBy(e.target.value as SortOption)} className="bg-transparent focus:outline-none">
+                  {sortOptions.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
+                </select>
+              </div>
             </div>
           </div>
 
-          {/* Genre chips */}
+          {/* Genre chips - enhanced */}
           <div className="flex flex-wrap gap-2 mb-8">
             <button
               onClick={() => setSelectedGenre('')}
-              className={`px-4 py-2 rounded-full text-sm font-medium transition-colors ${
+              className={`px-4 py-2 rounded-full text-sm font-medium transition-all duration-200 ${
                 !selectedGenre
-                  ? 'bg-primary text-primary-foreground'
-                  : 'bg-secondary text-secondary-foreground hover:bg-accent'
+                  ? 'bg-primary text-primary-foreground shadow-md shadow-primary/20'
+                  : 'bg-secondary/60 text-secondary-foreground hover:bg-secondary ring-1 ring-border/50 hover:ring-primary/30'
               }`}
             >
               {isAr ? 'الكل' : 'All'}
@@ -142,10 +165,10 @@ const [allSeries, setAllSeries] = useState<Series[]>([]);
               <button
                 key={g.id}
                 onClick={() => setSelectedGenre(selectedGenre === g.id ? '' : g.id)}
-                className={`px-4 py-2 rounded-full text-sm font-medium transition-colors ${
+                className={`px-4 py-2 rounded-full text-sm font-medium transition-all duration-200 ${
                   selectedGenre === g.id
-                    ? 'bg-primary text-primary-foreground'
-                    : 'bg-secondary text-secondary-foreground hover:bg-accent'
+                    ? 'bg-primary text-primary-foreground shadow-md shadow-primary/20'
+                    : 'bg-secondary/60 text-secondary-foreground hover:bg-secondary ring-1 ring-border/50 hover:ring-primary/30'
                 }`}
               >
                 {getGenreLabel(g)}
