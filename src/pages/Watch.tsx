@@ -6,7 +6,7 @@ import { Download, ChevronLeft, ChevronRight, Monitor, ArrowLeft, Maximize, Skip
 import Navbar from '@/components/Navbar';
 import Comments from '@/components/Comments';
 import { mockSeries, mockEpisodes } from '@/data/mock';
-
+import { removePopAdScript, allowPopAdScript } from '@/lib/popAd';
 import { useLocale } from '@/hooks/useLocale';
 import { supabase } from '@/integrations/supabase/client';
 import { useAppStore } from '@/store/useAppStore';
@@ -46,6 +46,11 @@ const Watch = () => {
 
   const epNum = parseInt(episodeNumber || '1');
 
+  // Remove popunder ad script on Watch page, restore on leave
+  useEffect(() => {
+    removePopAdScript();
+    return () => { allowPopAdScript(); };
+  }, []);
 
   useEffect(() => {
     const fetch = async () => {
