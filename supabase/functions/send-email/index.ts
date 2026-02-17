@@ -1,5 +1,4 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-import { SmtpClient } from "https://deno.land/x/smtp@v0.7.0/mod.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -16,7 +15,7 @@ serve(async (req) => {
     const { type, to, name, email, subject, message } = await req.json();
 
     const SMTP_HOST = Deno.env.get("SMTP_HOST");
-    const SMTP_PORT = parseInt(Deno.env.get("SMTP_PORT") || "465");
+    const SMTP_PORT = Deno.env.get("SMTP_PORT") || "465";
     const SMTP_USER = Deno.env.get("SMTP_USER");
     const SMTP_PASS = Deno.env.get("SMTP_PASS");
 
@@ -24,36 +23,41 @@ serve(async (req) => {
       throw new Error("SMTP credentials not configured");
     }
 
-    const client = new SmtpClient();
-
-    await client.connectTLS({
-      hostname: SMTP_HOST,
-      port: SMTP_PORT,
-      username: SMTP_USER,
-      password: SMTP_PASS,
-    });
+    let emailTo: string;
+    let emailSubject: string;
+    let emailHtml: string;
 
     if (type === "contact") {
-      // Contact form → send to admin
-      await client.send({
-        from: SMTP_USER,
-        to: SMTP_USER,
-        subject: `📩 New Contact: ${subject}`,
-        content: "text/html",
-        html: buildContactEmail(name!, email!, subject!, message!),
-      });
+      emailTo = SMTP_USER;
+      emailSubject = `📩 New Contact: ${subject}`;
+      emailHtml = buildContactEmail(name!, email!, subject!, message!);
     } else if (type === "welcome") {
-      // Welcome email → send to new user
-      await client.send({
-        from: SMTP_USER,
-        to: to!,
-        subject: "🌙 Welcome to HilalStream!",
-        content: "text/html",
-        html: buildWelcomeEmail(name!),
-      });
+      emailTo = to!;
+      emailSubject = "🌙 Welcome to HilalStream!";
+      emailHtml = buildWelcomeEmail(name!);
+    } else {
+      throw new Error("Invalid email type");
     }
 
-    await client.close();
+    // Use nodemailer via npm: specifier (compatible with Deno/Edge Runtime)
+    const nodemailer = await import("npm:nodemailer@6.9.16");
+    
+    const transporter = nodemailer.default.createTransport({
+      host: SMTP_HOST,
+      port: parseInt(SMTP_PORT),
+      secure: parseInt(SMTP_PORT) === 465,
+      auth: {
+        user: SMTP_USER,
+        pass: SMTP_PASS,
+      },
+    });
+
+    await transporter.sendMail({
+      from: `"HilalStream" <${SMTP_USER}>`,
+      to: emailTo,
+      subject: emailSubject,
+      html: emailHtml,
+    });
 
     return new Response(JSON.stringify({ success: true }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -104,28 +108,22 @@ function buildWelcomeEmail(name: string) {
 <head><meta charset="utf-8"></head>
 <body style="margin:0;padding:0;background:#0a0a0a;font-family:'Segoe UI',Tahoma,Geneva,Verdana,sans-serif;">
   <div style="max-width:600px;margin:40px auto;background:linear-gradient(135deg,#1a1a2e 0%,#16213e 100%);border-radius:16px;overflow:hidden;border:1px solid #2a2a4a;">
-    
-    <!-- Header -->
     <div style="background:linear-gradient(135deg,#c9a84c 0%,#e8c65a 100%);padding:32px;text-align:center;">
       <div style="font-size:48px;margin-bottom:8px;">☪</div>
       <h1 style="margin:0;color:#0a0a0a;font-size:28px;font-weight:700;">HilalStream</h1>
       <p style="margin:8px 0 0;color:#1a1a2e;font-size:14px;font-weight:500;">Your Islamic Entertainment Hub</p>
     </div>
-
-    <!-- Body -->
     <div style="padding:40px 32px;">
       <h2 style="margin:0 0 16px;color:#f1f1f1;font-size:24px;">Welcome, ${escapeHtml(name)}! 🎉</h2>
       <p style="color:#d1d5db;font-size:15px;line-height:1.7;margin:0 0 24px;">
         We're thrilled to have you join the HilalStream community! You now have access to a curated collection of Islamic series, programs, and exclusive content.
       </p>
-
-      <!-- Features -->
-      <div style="display:flex;flex-direction:column;gap:12px;margin-bottom:28px;">
-        <div style="padding:16px;background:#0f0f23;border-radius:12px;border:1px solid #2a2a4a;">
+      <div style="margin-bottom:28px;">
+        <div style="padding:16px;background:#0f0f23;border-radius:12px;border:1px solid #2a2a4a;margin-bottom:12px;">
           <p style="margin:0;color:#c9a84c;font-size:14px;font-weight:600;">🎬 Premium Series</p>
           <p style="margin:4px 0 0;color:#9ca3af;font-size:13px;">Watch the latest Islamic drama series and documentaries</p>
         </div>
-        <div style="padding:16px;background:#0f0f23;border-radius:12px;border:1px solid #2a2a4a;">
+        <div style="padding:16px;background:#0f0f23;border-radius:12px;border:1px solid #2a2a4a;margin-bottom:12px;">
           <p style="margin:0;color:#c9a84c;font-size:14px;font-weight:600;">📺 Programs & Shows</p>
           <p style="margin:4px 0 0;color:#9ca3af;font-size:13px;">Explore educational and entertaining Islamic programs</p>
         </div>
@@ -134,20 +132,15 @@ function buildWelcomeEmail(name: string) {
           <p style="margin:4px 0 0;color:#9ca3af;font-size:13px;">Save favorites, track your progress, and get recommendations</p>
         </div>
       </div>
-
-      <!-- CTA -->
       <div style="text-align:center;margin:32px 0;">
         <a href="https://hilal-stream.lovable.app" style="display:inline-block;padding:14px 40px;background:linear-gradient(135deg,#c9a84c 0%,#e8c65a 100%);color:#0a0a0a;text-decoration:none;border-radius:12px;font-weight:700;font-size:15px;">
           Start Watching Now →
         </a>
       </div>
-
       <p style="color:#6b7280;font-size:13px;text-align:center;margin:0;">
         If you have any questions, reply to this email or visit our <a href="https://hilal-stream.lovable.app/contact" style="color:#c9a84c;">Contact Page</a>.
       </p>
     </div>
-
-    <!-- Footer -->
     <div style="padding:20px 32px;border-top:1px solid #2a2a4a;text-align:center;">
       <p style="margin:0;color:#4b5563;font-size:12px;">© 2025 HilalStream. All rights reserved.</p>
       <p style="margin:4px 0 0;color:#4b5563;font-size:11px;">You received this because you signed up at HilalStream</p>
