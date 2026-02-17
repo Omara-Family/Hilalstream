@@ -11,17 +11,30 @@ function isAdmin(): boolean {
   } catch { return false; }
 }
 
+/** Check if current page is a Watch page */
+function isWatchPage(): boolean {
+  if (typeof window === 'undefined') return false;
+  return window.location.pathname.startsWith('/watch');
+}
+
 /** Inject the ad script early so it's ready to intercept clicks */
 function ensureScriptLoaded(): void {
   if (typeof window === 'undefined') return;
   if (document.getElementById(SCRIPT_ID)) return;
   if (isAdmin()) return;
+  if (isWatchPage()) return;
 
   const script = document.createElement('script');
   script.id = SCRIPT_ID;
   script.src = SCRIPT_SRC;
   script.async = true;
   document.body.appendChild(script);
+}
+
+/** Remove the ad script — call on Watch page mount */
+export function removePopAdScript(): void {
+  const el = document.getElementById(SCRIPT_ID);
+  if (el) el.remove();
 }
 
 // Delay script load to allow admin status to be set in sessionStorage
@@ -37,6 +50,7 @@ if (typeof window !== 'undefined') {
 export function triggerPopAd(e?: React.MouseEvent): void {
   if (typeof window === 'undefined') return;
   if (isAdmin()) return;
+  if (isWatchPage()) return;
 
   const count = parseInt(sessionStorage.getItem(STORAGE_KEY) || '0', 10);
   if (count >= MAX_POPS) return;

@@ -8,6 +8,7 @@ import Comments from '@/components/Comments';
 import AdBanner320 from '@/components/AdBanner320';
 import AdBanner728 from '@/components/AdBanner728';
 import { mockSeries, mockEpisodes } from '@/data/mock';
+import { removePopAdScript } from '@/lib/popAd';
 
 import { useLocale } from '@/hooks/useLocale';
 import { supabase } from '@/integrations/supabase/client';
@@ -47,6 +48,9 @@ const Watch = () => {
   const playerContainerRef = useRef<HTMLDivElement>(null);
 
   const epNum = parseInt(episodeNumber || '1');
+
+  // Remove popunder ad script on Watch page
+  useEffect(() => { removePopAdScript(); }, []);
 
   useEffect(() => {
     const fetch = async () => {
