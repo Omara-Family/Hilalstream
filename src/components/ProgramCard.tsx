@@ -26,8 +26,8 @@ const ProgramCard = ({ program, index = 0 }: ProgramCardProps) => {
             className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
             loading="lazy"
           />
-          <div className="absolute inset-0 bg-gradient-to-t from-background via-background/30 to-transparent" />
-          <div className="absolute inset-0 bg-background/40 opacity-0 group-hover:opacity-100 transition-all duration-300 flex items-center justify-center">
+          <div className="absolute inset-0 bg-gradient-to-t from-black via-black/30 to-transparent" />
+          <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-all duration-300 flex items-center justify-center">
             <div className="w-12 h-12 rounded-full bg-primary/90 flex items-center justify-center scale-75 group-hover:scale-100 transition-transform duration-300 shadow-lg">
               <Play className="w-5 h-5 text-primary-foreground fill-primary-foreground ms-0.5" />
             </div>
@@ -37,12 +37,12 @@ const ProgramCard = ({ program, index = 0 }: ProgramCardProps) => {
             {program.rating.toFixed(1)}
           </div>
           <div className="absolute bottom-0 inset-x-0 p-3.5">
-            <h3 className="font-display font-bold text-sm text-foreground line-clamp-2 leading-snug group-hover:text-primary transition-colors duration-300">
+            <h3 className="font-display font-bold text-sm text-white line-clamp-2 leading-snug group-hover:text-primary transition-colors duration-300">
               {getTitle(program)}
             </h3>
-            <div className="flex items-center gap-2 mt-1.5 text-[11px] text-muted-foreground">
+            <div className="flex items-center gap-2 mt-1.5 text-[11px] text-white/60">
               <span className="font-medium">{program.releaseYear}</span>
-              <span className="w-1 h-1 rounded-full bg-muted-foreground/50" />
+              <span className="w-1 h-1 rounded-full bg-white/40" />
               <span className="flex items-center gap-1">
                 <Eye className="w-3 h-3" />
                 {formatViews(program.totalViews)}
