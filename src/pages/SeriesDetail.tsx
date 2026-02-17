@@ -139,46 +139,59 @@ const SeriesDetail = () => {
   
 
   useEffect(() => {
-    const fetch = async () => {
+    const fetchData = async () => {
       setLoading(true);
-      // Try DB first
-      const { data: dbSeries } = await supabase
-        .from('series')
-        .select('id, title_ar, title_en, slug, description_ar, description_en, poster_image, backdrop_image, release_year, genre, tags, rating, total_views, is_trending, created_at')
-        .eq('slug', slug!)
-        .maybeSingle();
-
-      if (dbSeries) {
-        const s = mapDbSeries(dbSeries);
-        setSeries(s);
-
-        const { data: dbEps } = await supabase
-          .from('episodes')
-          .select('*')
-          .eq('series_id', dbSeries.id)
-          .order('episode_number', { ascending: true });
-        setEpisodes(dbEps ? dbEps.map(mapDbEpisode) : []);
-
-        // Related by genre
-        const { data: relData } = await supabase
+      try {
+        const { data: dbSeries, error: seriesError } = await supabase
           .from('series')
-          .select('id, title_ar, title_en, slug, poster_image, backdrop_image, release_year, genre, tags, rating, total_views, is_trending, created_at, description_ar, description_en')
-          .neq('id', dbSeries.id)
-          .overlaps('genre', dbSeries.genre || [])
-          .limit(4);
-        setRelated(relData ? relData.map(mapDbSeries) : []);
-      } else {
-        // Fallback to mock
+          .select('id, title_ar, title_en, slug, description_ar, description_en, poster_image, backdrop_image, release_year, genre, tags, rating, total_views, is_trending, created_at')
+          .eq('slug', slug || '')
+          .maybeSingle();
+
+        if (seriesError) {
+          console.error('Error fetching series:', seriesError);
+        }
+
+        if (dbSeries) {
+          const s = mapDbSeries(dbSeries);
+          setSeries(s);
+
+          const { data: dbEps, error: epsError } = await supabase
+            .from('episodes')
+            .select('*')
+            .eq('series_id', dbSeries.id)
+            .order('episode_number', { ascending: true });
+          if (epsError) console.error('Error fetching episodes:', epsError);
+          setEpisodes(dbEps ? dbEps.map(mapDbEpisode) : []);
+
+          const { data: relData } = await supabase
+            .from('series')
+            .select('id, title_ar, title_en, slug, poster_image, backdrop_image, release_year, genre, tags, rating, total_views, is_trending, created_at, description_ar, description_en')
+            .neq('id', dbSeries.id)
+            .overlaps('genre', dbSeries.genre || [])
+            .limit(4);
+          setRelated(relData ? relData.map(mapDbSeries) : []);
+        } else {
+          const mock = mockSeries.find(s => s.slug === slug);
+          setSeries(mock || null);
+          if (mock) {
+            setEpisodes(mockEpisodes.filter(ep => ep.seriesId === mock._id).sort((a, b) => a.episodeNumber - b.episodeNumber));
+            setRelated(mockSeries.filter(s => s._id !== mock._id && s.genre.some(g => mock.genre.includes(g))).slice(0, 4));
+          }
+        }
+      } catch (err) {
+        console.error('Unexpected error loading series page:', err);
         const mock = mockSeries.find(s => s.slug === slug);
         setSeries(mock || null);
         if (mock) {
           setEpisodes(mockEpisodes.filter(ep => ep.seriesId === mock._id).sort((a, b) => a.episodeNumber - b.episodeNumber));
           setRelated(mockSeries.filter(s => s._id !== mock._id && s.genre.some(g => mock.genre.includes(g))).slice(0, 4));
         }
+      } finally {
+        setLoading(false);
       }
-      setLoading(false);
     };
-    fetch();
+    fetchData();
   }, [slug]);
 
   if (loading) {

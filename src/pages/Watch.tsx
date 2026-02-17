@@ -55,28 +55,42 @@ const Watch = () => {
   }, []);
 
   useEffect(() => {
-    const fetch = async () => {
+    const fetchData = async () => {
       setLoading(true);
-      const { data: dbSeries } = await supabase
-        .from('series')
-        .select('id, title_ar, title_en, slug, description_ar, description_en, poster_image, backdrop_image, release_year, genre, tags, rating, total_views, is_trending, created_at')
-        .eq('slug', seriesSlug!)
-        .maybeSingle();
+      try {
+        const { data: dbSeries, error: seriesError } = await supabase
+          .from('series')
+          .select('id, title_ar, title_en, slug, description_ar, description_en, poster_image, backdrop_image, release_year, genre, tags, rating, total_views, is_trending, created_at')
+          .eq('slug', seriesSlug || '')
+          .maybeSingle();
 
-      if (dbSeries) {
-        setSeries(mapDbSeries(dbSeries));
-        const { data: dbEps } = await supabase
-          .from('episodes').select('*').eq('series_id', dbSeries.id)
-          .order('episode_number', { ascending: true });
-        setEpisodes(dbEps ? dbEps.map(mapDbEpisode) : []);
-      } else {
+        if (seriesError) {
+          console.error('Error fetching series:', seriesError);
+        }
+
+        if (dbSeries) {
+          setSeries(mapDbSeries(dbSeries));
+          const { data: dbEps, error: epsError } = await supabase
+            .from('episodes').select('*').eq('series_id', dbSeries.id)
+            .order('episode_number', { ascending: true });
+          if (epsError) console.error('Error fetching episodes:', epsError);
+          setEpisodes(dbEps ? dbEps.map(mapDbEpisode) : []);
+        } else {
+          const mock = mockSeries.find(s => s.slug === seriesSlug);
+          setSeries(mock || null);
+          if (mock) setEpisodes(mockEpisodes.filter(ep => ep.seriesId === mock._id).sort((a, b) => a.episodeNumber - b.episodeNumber));
+        }
+      } catch (err) {
+        console.error('Unexpected error loading watch page:', err);
+        // Fallback to mock data
         const mock = mockSeries.find(s => s.slug === seriesSlug);
         setSeries(mock || null);
         if (mock) setEpisodes(mockEpisodes.filter(ep => ep.seriesId === mock._id).sort((a, b) => a.episodeNumber - b.episodeNumber));
+      } finally {
+        setLoading(false);
       }
-      setLoading(false);
     };
-    fetch();
+    fetchData();
     setActiveServer(0);
   }, [seriesSlug]);
 
