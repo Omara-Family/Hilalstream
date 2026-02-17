@@ -1,27 +1,36 @@
 import { Moon, Sun } from 'lucide-react';
 import { useEffect, useState } from 'react';
 
+const getSystemTheme = () =>
+  window.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark';
+
 const ThemeToggle = () => {
   const [isDark, setIsDark] = useState(true);
 
   useEffect(() => {
     const stored = localStorage.getItem('hilal-theme');
-    if (stored === 'light') {
-      setIsDark(false);
-      document.documentElement.classList.add('light');
-    }
+    const theme = stored || getSystemTheme();
+    const dark = theme !== 'light';
+    setIsDark(dark);
+    document.documentElement.classList.toggle('light', !dark);
+
+    // Listen for system theme changes when no user preference is stored
+    const mq = window.matchMedia('(prefers-color-scheme: light)');
+    const handler = (e: MediaQueryListEvent) => {
+      if (!localStorage.getItem('hilal-theme')) {
+        setIsDark(!e.matches);
+        document.documentElement.classList.toggle('light', e.matches);
+      }
+    };
+    mq.addEventListener('change', handler);
+    return () => mq.removeEventListener('change', handler);
   }, []);
 
   const toggle = () => {
     const next = !isDark;
     setIsDark(next);
-    if (next) {
-      document.documentElement.classList.remove('light');
-      localStorage.setItem('hilal-theme', 'dark');
-    } else {
-      document.documentElement.classList.add('light');
-      localStorage.setItem('hilal-theme', 'light');
-    }
+    document.documentElement.classList.toggle('light', next);
+    localStorage.setItem('hilal-theme', next ? 'light' : 'dark');
   };
 
   return (
