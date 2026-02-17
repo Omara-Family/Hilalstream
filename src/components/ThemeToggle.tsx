@@ -4,15 +4,17 @@ import { useEffect, useState } from 'react';
 const getSystemTheme = () =>
   window.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark';
 
+const getInitialTheme = () => {
+  const stored = localStorage.getItem('hilal-theme');
+  const theme = stored || getSystemTheme();
+  return theme !== 'light';
+};
+
 const ThemeToggle = () => {
-  const [isDark, setIsDark] = useState(true);
+  const [isDark, setIsDark] = useState(getInitialTheme);
 
   useEffect(() => {
-    const stored = localStorage.getItem('hilal-theme');
-    const theme = stored || getSystemTheme();
-    const dark = theme !== 'light';
-    setIsDark(dark);
-    document.documentElement.classList.toggle('light', !dark);
+    document.documentElement.classList.toggle('light', !isDark);
 
     // Listen for system theme changes when no user preference is stored
     const mq = window.matchMedia('(prefers-color-scheme: light)');
@@ -24,12 +26,11 @@ const ThemeToggle = () => {
     };
     mq.addEventListener('change', handler);
     return () => mq.removeEventListener('change', handler);
-  }, []);
+  }, [isDark]);
 
   const toggle = () => {
     const next = !isDark;
     setIsDark(next);
-    document.documentElement.classList.toggle('light', next);
     localStorage.setItem('hilal-theme', next ? 'light' : 'dark');
   };
 
