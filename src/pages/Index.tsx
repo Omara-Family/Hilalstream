@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react';
 import HeroBanner from '@/components/HeroBanner';
 import { SkeletonHero, SkeletonRow } from '@/components/Skeleton';
 import SectionRow from '@/components/SectionRow';
+import ProgramRow from '@/components/ProgramRow';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import RamadanLights from '@/components/RamadanLights';
@@ -39,31 +40,58 @@ const mapSeries = (s: DbSeries) => ({
   createdAt: s.created_at,
 });
 
+const mapProgram = (p: any) => ({
+  _id: p.id,
+  title_ar: p.title_ar,
+  title_en: p.title_en,
+  slug: p.slug,
+  description_ar: p.description_ar || '',
+  description_en: p.description_en || '',
+  posterImage: p.poster_image || '',
+  backdropImage: p.backdrop_image || '',
+  releaseYear: p.release_year,
+  genre: p.genre || [],
+  tags: p.tags || [],
+  rating: Number(p.rating) || 0,
+  totalViews: p.total_views || 0,
+  isTrending: p.is_trending || false,
+  createdAt: p.created_at,
+});
+
 const Index = () => {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
+  const isAr = i18n.language === 'ar';
   const { getGenreLabel } = useLocale();
   const [allSeries, setAllSeries] = useState<ReturnType<typeof mapSeries>[]>([]);
+  const [allPrograms, setAllPrograms] = useState<ReturnType<typeof mapProgram>[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => { initPopAd(); }, []);
 
-
   useEffect(() => {
-    const fetchSeries = async () => {
-      const { data } = await supabase
-        .from('series')
-        .select('id, title_ar, title_en, slug, description_ar, description_en, poster_image, backdrop_image, release_year, genre, tags, rating, total_views, is_trending, created_at')
-        .order('created_at', { ascending: false });
+    const fetchData = async () => {
+      const [seriesRes, programsRes] = await Promise.all([
+        supabase.from('series')
+          .select('id, title_ar, title_en, slug, description_ar, description_en, poster_image, backdrop_image, release_year, genre, tags, rating, total_views, is_trending, created_at')
+          .order('created_at', { ascending: false }),
+        supabase.from('programs')
+          .select('*')
+          .order('created_at', { ascending: false }),
+      ]);
 
-      if (data && data.length > 0) {
-        setAllSeries(data.map(mapSeries));
+      if (seriesRes.data && seriesRes.data.length > 0) {
+        setAllSeries(seriesRes.data.map(mapSeries));
       } else {
-        // Fallback to mock only if DB has no data
         setAllSeries(mockSeries);
       }
+
+      if (programsRes.data) {
+        setAllPrograms(programsRes.data.map(mapProgram));
+      }
+
       setLoading(false);
     };
-    fetchSeries();
+    fetchData();
   }, []);
 
   const trending = allSeries.filter(s => s.isTrending);
@@ -97,6 +125,10 @@ const Index = () => {
 
             <SectionRow title={t('home.popular')} series={popular} viewAllLink="/browse?sort=views" />
             <SectionRow title={t('home.latest')} series={latest} viewAllLink="/browse?sort=latest" />
+
+            {allPrograms.length > 0 && (
+              <ProgramRow title={isAr ? 'البرامج' : 'Programs'} programs={allPrograms} />
+            )}
 
         {/* Genre Grid */}
         <section className="py-14">

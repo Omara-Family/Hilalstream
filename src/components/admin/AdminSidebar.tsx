@@ -19,12 +19,15 @@ export function AdminSidebar() {
   const { state } = useSidebar();
   const collapsed = state === 'collapsed';
   const location = useLocation();
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
+  const isAr = i18n.language === 'ar';
 
   const items = [
     { title: t('admin.dashboard'), url: '/admin', icon: LayoutDashboard },
     { title: t('admin.series'), url: '/admin/series', icon: Tv },
     { title: t('admin.episodes'), url: '/admin/episodes', icon: Film },
+    { title: isAr ? 'البرامج' : 'Programs', url: '/admin/programs', icon: Tv },
+    { title: isAr ? 'حلقات البرامج' : 'Program Episodes', url: '/admin/program-episodes', icon: Film },
     { title: t('admin.users'), url: '/admin/users', icon: Users },
   ];
 
