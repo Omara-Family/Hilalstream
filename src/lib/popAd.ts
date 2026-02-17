@@ -3,10 +3,19 @@ const STORAGE_KEY = 'popCount';
 const SCRIPT_ID = 'pop-ad-script';
 const MAX_POPS = 5;
 
+/** Check if current user is admin (reads from zustand store) */
+function isAdmin(): boolean {
+  try {
+    const store = JSON.parse(sessionStorage.getItem('app-admin') || 'false');
+    return store === true;
+  } catch { return false; }
+}
+
 /** Inject the ad script early so it's ready to intercept clicks */
 function ensureScriptLoaded(): void {
   if (typeof window === 'undefined') return;
   if (document.getElementById(SCRIPT_ID)) return;
+  if (isAdmin()) return;
 
   const script = document.createElement('script');
   script.id = SCRIPT_ID;
@@ -25,6 +34,7 @@ ensureScriptLoaded();
  */
 export function triggerPopAd(e?: React.MouseEvent): void {
   if (typeof window === 'undefined') return;
+  if (isAdmin()) return;
 
   const count = parseInt(sessionStorage.getItem(STORAGE_KEY) || '0', 10);
   if (count >= MAX_POPS) return;
