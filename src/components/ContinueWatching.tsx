@@ -1,7 +1,7 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { Play } from 'lucide-react';
+import { Play, ChevronLeft, ChevronRight } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAppStore } from '@/store/useAppStore';
 import { useLocale } from '@/hooks/useLocale';
@@ -17,10 +17,19 @@ interface ContinueItem {
 }
 
 const ContinueWatching = () => {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const { user } = useAppStore();
   const { getTitle } = useLocale();
   const [items, setItems] = useState<ContinueItem[]>([]);
+  const scrollRef = useRef<HTMLDivElement>(null);
+  const isRtl = i18n.language === 'ar';
+
+  const scroll = (dir: 'left' | 'right') => {
+    if (!scrollRef.current) return;
+    const amount = 300;
+    const scrollAmount = dir === 'left' ? -amount : amount;
+    scrollRef.current.scrollBy({ left: isRtl ? -scrollAmount : scrollAmount, behavior: 'smooth' });
+  };
 
   useEffect(() => {
     if (!user) return;
@@ -82,10 +91,23 @@ const ContinueWatching = () => {
   return (
     <section className="py-8">
       <div className="container mx-auto px-4">
-        <h2 className="text-xl md:text-2xl font-display font-bold text-foreground mb-5">
-          {t('home.continueWatching', 'متابعة المشاهدة')}
-        </h2>
-        <div className="flex gap-4 overflow-x-auto scrollbar-hide pb-2">
+        <div className="flex items-center justify-between mb-5">
+          <div className="flex items-center gap-3">
+            <div className="w-1 h-7 rounded-full bg-primary" />
+            <h2 className="text-xl md:text-2xl font-display font-bold text-foreground">
+              {t('home.continueWatching', 'متابعة المشاهدة')}
+            </h2>
+          </div>
+          <div className="flex items-center gap-2">
+            <button onClick={() => scroll('left')} className="p-2 rounded-full bg-secondary/80 ring-1 ring-border hover:bg-surface-hover hover:ring-primary/30 transition-all duration-200">
+              <ChevronLeft className="w-4 h-4 text-secondary-foreground" />
+            </button>
+            <button onClick={() => scroll('right')} className="p-2 rounded-full bg-secondary/80 ring-1 ring-border hover:bg-surface-hover hover:ring-primary/30 transition-all duration-200">
+              <ChevronRight className="w-4 h-4 text-secondary-foreground" />
+            </button>
+          </div>
+        </div>
+        <div ref={scrollRef} className="flex gap-4 overflow-x-auto scrollbar-hide pb-2">
           {items.map(item => (
             <Link
               key={item.episodeId}
