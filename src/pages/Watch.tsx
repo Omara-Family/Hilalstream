@@ -33,7 +33,7 @@ const mapDbEpisode = (ep: any): Episode => ({
 const Watch = () => {
   const { seriesSlug, episodeNumber } = useParams<{ seriesSlug: string; episodeNumber: string }>();
   const { t } = useTranslation();
-  const { getTitle } = useLocale();
+  const { getTitle, isArabic } = useLocale();
   const navigate = useNavigate();
   const { user } = useAppStore();
   const { recordWatch } = useStreak();
@@ -205,7 +205,7 @@ const Watch = () => {
           <div className="flex flex-wrap items-center gap-3">
             {hasPrev && <button onClick={() => navigate(`/watch/${series.slug}/${epNum - 1}`)} className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-secondary text-secondary-foreground hover:bg-surface-hover transition-colors text-sm"><ChevronLeft className="w-4 h-4" />{t('watch.prevEpisode')}</button>}
             {hasNext && <button onClick={() => navigate(`/watch/${series.slug}/${epNum + 1}`)} className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-primary text-primary-foreground hover:opacity-90 transition-opacity text-sm">{t('watch.nextEpisode')}<ChevronRight className="w-4 h-4" /></button>}
-            {currentEp.downloadUrl && <a href={currentEp.downloadUrl} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-secondary text-secondary-foreground hover:bg-surface-hover transition-colors text-sm"><Download className="w-4 h-4" />{t('watch.download')}</a>}
+            {currentEp.downloadUrl && <a href={currentEp.downloadUrl} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-secondary text-secondary-foreground hover:bg-surface-hover transition-colors text-sm"><Download className="w-4 h-4" />{t('watch.download')} <span className="text-xs text-muted-foreground">({isArabic ? 'متعدد الجودات' : 'Multi-quality'})</span></a>}
           </div>
 
           <div className="mt-8">
