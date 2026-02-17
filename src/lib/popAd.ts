@@ -23,6 +23,7 @@ function ensureScriptLoaded(): void {
   if (document.getElementById(SCRIPT_ID)) return;
   if (isAdmin()) return;
   if (isWatchPage()) return;
+  if (sessionStorage.getItem('on-watch-page') === 'true') return;
 
   const script = document.createElement('script');
   script.id = SCRIPT_ID;
@@ -31,10 +32,28 @@ function ensureScriptLoaded(): void {
   document.body.appendChild(script);
 }
 
-/** Remove the ad script — call on Watch page mount */
+/** Remove the ad script and block it from re-loading on Watch page */
 export function removePopAdScript(): void {
+  // Remove the script element
   const el = document.getElementById(SCRIPT_ID);
   if (el) el.remove();
+  
+  // Remove any ad-injected iframes
+  document.querySelectorAll('iframe').forEach(iframe => {
+    const src = iframe.src || '';
+    if (src.includes('highperformanceformat') || src.includes('ballroomfondness') || 
+        src.includes('kettledrooping')) {
+      iframe.remove();
+    }
+  });
+  
+  // Mark that we're on watch page so the script won't re-load
+  sessionStorage.setItem('on-watch-page', 'true');
+}
+
+/** Call when leaving Watch page to allow ads again */
+export function allowPopAdScript(): void {
+  sessionStorage.removeItem('on-watch-page');
 }
 
 // Delay script load to allow admin status to be set in sessionStorage
