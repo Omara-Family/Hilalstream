@@ -35,6 +35,10 @@ const Register = () => {
     if (error) {
       toast({ title: t('common.error'), description: error.message, variant: 'destructive' });
     } else {
+      // Send welcome email (fire-and-forget)
+      supabase.functions.invoke('send-email', {
+        body: { type: 'welcome', to: email, name },
+      }).catch(console.error);
       toast({ title: '✅', description: 'Check your email to confirm your account' });
       navigate('/login');
     }
