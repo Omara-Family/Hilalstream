@@ -32,13 +32,13 @@ function ensureScriptLoaded(): void {
   document.body.appendChild(script);
 }
 
-/** Remove the ad script and block it from re-loading on Watch page */
+/** Remove the ad script, block popunders on Watch page */
 export function removePopAdScript(): void {
   // Remove the script element
   const el = document.getElementById(SCRIPT_ID);
   if (el) el.remove();
   
-  // Remove any ad-injected iframes
+  // Remove any ad-injected iframes/elements
   document.querySelectorAll('iframe').forEach(iframe => {
     const src = iframe.src || '';
     if (src.includes('highperformanceformat') || src.includes('ballroomfondness') || 
@@ -47,13 +47,24 @@ export function removePopAdScript(): void {
     }
   });
   
-  // Mark that we're on watch page so the script won't re-load
+  // Block window.open — this is how popunders actually open new tabs/windows
+  if (!(window as any).__originalOpen) {
+    (window as any).__originalOpen = window.open;
+  }
+  window.open = function() { return null; } as typeof window.open;
+  
   sessionStorage.setItem('on-watch-page', 'true');
 }
 
 /** Call when leaving Watch page to allow ads again */
 export function allowPopAdScript(): void {
   sessionStorage.removeItem('on-watch-page');
+  
+  // Restore window.open
+  if ((window as any).__originalOpen) {
+    window.open = (window as any).__originalOpen;
+    delete (window as any).__originalOpen;
+  }
 }
 
 /** Call from non-Watch pages to load the popunder script */
