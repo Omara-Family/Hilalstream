@@ -6,6 +6,8 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useAppStore } from '@/store/useAppStore';
 import { useStreak } from '@/hooks/useStreak';
 import StreakBadge from '@/components/StreakBadge';
+import ThemeToggle from '@/components/ThemeToggle';
+import NotificationBell from '@/components/NotificationBell';
 
 const Navbar = () => {
   const { t, i18n } = useTranslation();
@@ -57,10 +59,12 @@ const Navbar = () => {
           <button onClick={() => setSearchOpen(!searchOpen)} className="p-2 rounded-lg text-muted-foreground hover:text-primary transition-colors">
             <Search className="w-5 h-5" />
           </button>
+          <ThemeToggle />
           <button onClick={toggleLang} className="p-2 rounded-lg text-muted-foreground hover:text-primary transition-colors flex items-center gap-1">
             <Globe className="w-5 h-5" />
             <span className="text-xs font-medium">{i18n.language === 'ar' ? 'EN' : 'عربي'}</span>
           </button>
+          <NotificationBell />
           <Link to="/favorites" className="hidden md:flex p-2 rounded-lg text-muted-foreground hover:text-primary transition-colors">
             <Heart className="w-5 h-5" />
           </Link>
