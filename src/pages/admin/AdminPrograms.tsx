@@ -7,7 +7,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { Textarea } from '@/components/ui/textarea';
-import { Plus, Pencil, Trash2, Loader2, Upload } from 'lucide-react';
+import { Plus, Pencil, Trash2, Sparkles, Loader2, Copy, Check, Upload } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
 type ProgramForm = {
@@ -23,6 +23,8 @@ const emptyForm: ProgramForm = {
   genre: '', tags: '', rating: 0,
 };
 
+type AiTask = 'seo' | 'improve_description' | 'social_caption' | 'suggest_tags';
+
 export default function AdminPrograms() {
   const { t, i18n } = useTranslation();
   const isAr = i18n.language === 'ar';
@@ -33,6 +35,9 @@ export default function AdminPrograms() {
   const [form, setForm] = useState<ProgramForm>(emptyForm);
   const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState<'poster' | 'backdrop' | null>(null);
+  const [aiLoading, setAiLoading] = useState<AiTask | null>(null);
+  const [aiResult, setAiResult] = useState<any>(null);
+  const [copied, setCopied] = useState<string | null>(null);
   const posterRef = useRef<HTMLInputElement>(null);
   const backdropRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
@@ -103,7 +108,7 @@ export default function AdminPrograms() {
 
   useEffect(() => { load(); }, []);
 
-  const openCreate = () => { setEditId(null); setForm(emptyForm); setOpen(true); };
+  const openCreate = () => { setEditId(null); setForm(emptyForm); setAiResult(null); setOpen(true); };
   const openEdit = (p: any) => {
     setEditId(p.id);
     setForm({
@@ -113,6 +118,7 @@ export default function AdminPrograms() {
       release_year: p.release_year, genre: (p.genre ?? []).join(', '),
       tags: (p.tags ?? []).join(', '), rating: p.rating ?? 0,
     });
+    setAiResult(null);
     setOpen(true);
   };
 
@@ -154,6 +160,62 @@ export default function AdminPrograms() {
 
   const f = (key: keyof ProgramForm, value: string | number) => setForm(p => ({ ...p, [key]: value }));
 
+  // AI Assistant
+  const runAi = async (task: AiTask) => {
+    if (aiLoading) return;
+    if (!form.title_en && !form.title_ar) {
+      toast({ title: isAr ? 'أدخل عنوان البرنامج أولاً' : 'Enter a program title first', variant: 'destructive' });
+      return;
+    }
+    setAiLoading(task);
+    setAiResult(null);
+    try {
+      const { data, error } = await supabase.functions.invoke('admin-ai', {
+        body: {
+          task,
+          context: {
+            title_en: form.title_en,
+            title_ar: form.title_ar,
+            description_en: form.description_en,
+            description_ar: form.description_ar,
+            genre: form.genre,
+            tags: form.tags,
+          },
+        },
+      });
+      if (error) throw error;
+      if (data?.error) {
+        toast({ title: 'AI Error', description: data.error, variant: 'destructive' });
+      } else {
+        setAiResult({ task, ...data.result });
+      }
+    } catch (e: any) {
+      toast({ title: 'AI Error', description: e.message || 'Failed', variant: 'destructive' });
+    } finally {
+      setAiLoading(null);
+    }
+  };
+
+  const applyAiResult = (key: string, value: string) => {
+    if (key === 'description_en') setForm(p => ({ ...p, description_en: value }));
+    else if (key === 'description_ar') setForm(p => ({ ...p, description_ar: value }));
+    else if (key === 'tags') setForm(p => ({ ...p, tags: value }));
+    toast({ title: isAr ? 'تم التطبيق ✓' : 'Applied ✓' });
+  };
+
+  const copyText = (key: string, text: string) => {
+    navigator.clipboard.writeText(text);
+    setCopied(key);
+    setTimeout(() => setCopied(null), 2000);
+  };
+
+  const aiButtons: { task: AiTask; label: string }[] = [
+    { task: 'seo', label: isAr ? '🔍 توليد SEO' : '🔍 Generate SEO' },
+    { task: 'improve_description', label: isAr ? '✍️ تحسين الوصف' : '✍️ Improve Description' },
+    { task: 'social_caption', label: isAr ? '📱 كابشن سوشال' : '📱 Social Caption' },
+    { task: 'suggest_tags', label: isAr ? '🏷️ اقتراح تاغات' : '🏷️ Suggest Tags' },
+  ];
+
   return (
     <div className="space-y-4">
       <div className="flex justify-between items-center">
@@ -194,70 +256,143 @@ export default function AdminPrograms() {
       </div>
 
       <Dialog open={open} onOpenChange={setOpen}>
-        <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto bg-card">
+        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto bg-card">
           <DialogHeader>
             <DialogTitle>{editId ? (isAr ? 'تعديل البرنامج' : 'Edit Program') : (isAr ? 'برنامج جديد' : 'New Program')}</DialogTitle>
           </DialogHeader>
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-1">
-              <label className="text-sm text-muted-foreground">{t('admin.titleEn')}</label>
-              <Input value={form.title_en} onChange={e => f('title_en', e.target.value)} />
-            </div>
-            <div className="space-y-1">
-              <label className="text-sm text-muted-foreground">{t('admin.titleAr')}</label>
-              <Input value={form.title_ar} onChange={e => f('title_ar', e.target.value)} />
-            </div>
-            <div className="space-y-1">
-              <label className="text-sm text-muted-foreground">{t('admin.slug')}</label>
-              <Input value={form.slug} onChange={e => f('slug', e.target.value)} />
-            </div>
-            <div className="space-y-1">
-              <label className="text-sm text-muted-foreground">{t('admin.year')}</label>
-              <Input type="number" value={form.release_year} onChange={e => f('release_year', parseInt(e.target.value))} />
-            </div>
-            <div className="space-y-1 col-span-2">
-              <label className="text-sm text-muted-foreground">{t('admin.descEn')}</label>
-              <Textarea value={form.description_en} onChange={e => f('description_en', e.target.value)} />
-            </div>
-            <div className="space-y-1 col-span-2">
-              <label className="text-sm text-muted-foreground">{t('admin.descAr')}</label>
-              <Textarea value={form.description_ar} onChange={e => f('description_ar', e.target.value)} />
-            </div>
-            <div className="space-y-1">
-              <label className="text-sm text-muted-foreground">{t('admin.posterUrl')}</label>
-              <div className="flex gap-2">
-                <Input value={form.poster_image} onChange={e => f('poster_image', e.target.value)} className="flex-1" />
-                <Button type="button" variant="outline" size="icon" onClick={() => posterRef.current?.click()} disabled={uploading === 'poster'}>
-                  {uploading === 'poster' ? <Loader2 className="h-4 w-4 animate-spin" /> : <Upload className="h-4 w-4" />}
-                </Button>
+
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            {/* Form fields */}
+            <div className="lg:col-span-2 grid grid-cols-2 gap-4">
+              <div className="space-y-1">
+                <label className="text-sm text-muted-foreground">{t('admin.titleEn')}</label>
+                <Input value={form.title_en} onChange={e => f('title_en', e.target.value)} />
               </div>
-              <input ref={posterRef} type="file" accept="image/*" className="hidden" onChange={e => { if (e.target.files?.[0]) handleUpload(e.target.files[0], 'poster'); }} />
-              {form.poster_image && <img src={form.poster_image} alt="" className="h-16 w-12 object-cover rounded mt-1" />}
-            </div>
-            <div className="space-y-1">
-              <label className="text-sm text-muted-foreground">{t('admin.backdropUrl')}</label>
-              <div className="flex gap-2">
-                <Input value={form.backdrop_image} onChange={e => f('backdrop_image', e.target.value)} className="flex-1" />
-                <Button type="button" variant="outline" size="icon" onClick={() => backdropRef.current?.click()} disabled={uploading === 'backdrop'}>
-                  {uploading === 'backdrop' ? <Loader2 className="h-4 w-4 animate-spin" /> : <Upload className="h-4 w-4" />}
-                </Button>
+              <div className="space-y-1">
+                <label className="text-sm text-muted-foreground">{t('admin.titleAr')}</label>
+                <Input value={form.title_ar} onChange={e => f('title_ar', e.target.value)} />
               </div>
-              <input ref={backdropRef} type="file" accept="image/*" className="hidden" onChange={e => { if (e.target.files?.[0]) handleUpload(e.target.files[0], 'backdrop'); }} />
-              {form.backdrop_image && <img src={form.backdrop_image} alt="" className="h-12 w-20 object-cover rounded mt-1" />}
+              <div className="space-y-1">
+                <label className="text-sm text-muted-foreground">{t('admin.slug')}</label>
+                <Input value={form.slug} onChange={e => f('slug', e.target.value)} />
+              </div>
+              <div className="space-y-1">
+                <label className="text-sm text-muted-foreground">{t('admin.year')}</label>
+                <Input type="number" value={form.release_year} onChange={e => f('release_year', parseInt(e.target.value))} />
+              </div>
+              <div className="space-y-1 col-span-2">
+                <label className="text-sm text-muted-foreground">{t('admin.descEn')}</label>
+                <Textarea value={form.description_en} onChange={e => f('description_en', e.target.value)} />
+              </div>
+              <div className="space-y-1 col-span-2">
+                <label className="text-sm text-muted-foreground">{t('admin.descAr')}</label>
+                <Textarea value={form.description_ar} onChange={e => f('description_ar', e.target.value)} />
+              </div>
+              <div className="space-y-1">
+                <label className="text-sm text-muted-foreground">{t('admin.posterUrl')}</label>
+                <div className="flex gap-2">
+                  <Input value={form.poster_image} onChange={e => f('poster_image', e.target.value)} className="flex-1" />
+                  <Button type="button" variant="outline" size="icon" onClick={() => posterRef.current?.click()} disabled={uploading === 'poster'}>
+                    {uploading === 'poster' ? <Loader2 className="h-4 w-4 animate-spin" /> : <Upload className="h-4 w-4" />}
+                  </Button>
+                </div>
+                <input ref={posterRef} type="file" accept="image/*" className="hidden" onChange={e => { if (e.target.files?.[0]) handleUpload(e.target.files[0], 'poster'); }} />
+                {form.poster_image && <img src={form.poster_image} alt="" className="h-16 w-12 object-cover rounded mt-1" />}
+              </div>
+              <div className="space-y-1">
+                <label className="text-sm text-muted-foreground">{t('admin.backdropUrl')}</label>
+                <div className="flex gap-2">
+                  <Input value={form.backdrop_image} onChange={e => f('backdrop_image', e.target.value)} className="flex-1" />
+                  <Button type="button" variant="outline" size="icon" onClick={() => backdropRef.current?.click()} disabled={uploading === 'backdrop'}>
+                    {uploading === 'backdrop' ? <Loader2 className="h-4 w-4 animate-spin" /> : <Upload className="h-4 w-4" />}
+                  </Button>
+                </div>
+                <input ref={backdropRef} type="file" accept="image/*" className="hidden" onChange={e => { if (e.target.files?.[0]) handleUpload(e.target.files[0], 'backdrop'); }} />
+                {form.backdrop_image && <img src={form.backdrop_image} alt="" className="h-12 w-20 object-cover rounded mt-1" />}
+              </div>
+              <div className="space-y-1">
+                <label className="text-sm text-muted-foreground">{t('admin.genre')}</label>
+                <Input value={form.genre} onChange={e => f('genre', e.target.value)} />
+              </div>
+              <div className="space-y-1">
+                <label className="text-sm text-muted-foreground">{t('admin.tags')}</label>
+                <Input value={form.tags} onChange={e => f('tags', e.target.value)} />
+              </div>
+              <div className="space-y-1">
+                <label className="text-sm text-muted-foreground">{t('admin.rating')}</label>
+                <Input type="number" step="0.1" min="0" max="10" value={form.rating} onChange={e => f('rating', parseFloat(e.target.value))} />
+              </div>
             </div>
-            <div className="space-y-1">
-              <label className="text-sm text-muted-foreground">{t('admin.genre')}</label>
-              <Input value={form.genre} onChange={e => f('genre', e.target.value)} />
-            </div>
-            <div className="space-y-1">
-              <label className="text-sm text-muted-foreground">{t('admin.tags')}</label>
-              <Input value={form.tags} onChange={e => f('tags', e.target.value)} />
-            </div>
-            <div className="space-y-1">
-              <label className="text-sm text-muted-foreground">{t('admin.rating')}</label>
-              <Input type="number" step="0.1" min="0" max="10" value={form.rating} onChange={e => f('rating', parseFloat(e.target.value))} />
+
+            {/* AI Assistant Panel */}
+            <div className="space-y-3">
+              <div className="flex items-center gap-2 mb-2">
+                <Sparkles className="h-5 w-5 text-primary" />
+                <h3 className="text-sm font-bold text-foreground">
+                  {isAr ? 'مساعد AI' : 'AI Assistant'}
+                </h3>
+              </div>
+              <div className="grid grid-cols-1 gap-2">
+                {aiButtons.map(({ task, label }) => (
+                  <Button
+                    key={task}
+                    variant="outline"
+                    size="sm"
+                    className="justify-start text-xs"
+                    disabled={!!aiLoading}
+                    onClick={() => runAi(task)}
+                  >
+                    {aiLoading === task ? <Loader2 className="h-3 w-3 me-2 animate-spin" /> : null}
+                    {label}
+                  </Button>
+                ))}
+              </div>
+
+              {/* AI Results */}
+              {aiResult && (
+                <div className="mt-3 p-3 rounded-lg bg-secondary border border-border space-y-3 text-xs">
+                  <p className="text-primary font-semibold text-xs">
+                    {isAr ? '✨ نتائج AI' : '✨ AI Results'}
+                  </p>
+                  {Object.entries(aiResult).map(([key, value]) => {
+                    if (key === 'task') return null;
+                    const displayValue = Array.isArray(value) ? (value as string[]).join(', ') : String(value);
+                    const canApply = ['description_en', 'description_ar', 'tags'].includes(key);
+                    return (
+                      <div key={key} className="space-y-1">
+                        <div className="flex items-center justify-between">
+                          <span className="font-medium text-muted-foreground">{key}</span>
+                          <div className="flex gap-1">
+                            <button
+                              onClick={() => copyText(key, displayValue)}
+                              className="p-1 rounded hover:bg-accent transition-colors"
+                              title="Copy"
+                            >
+                              {copied === key ? <Check className="h-3 w-3 text-green-500" /> : <Copy className="h-3 w-3 text-muted-foreground" />}
+                            </button>
+                            {canApply && (
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                className="h-5 px-1.5 text-[10px]"
+                                onClick={() => applyAiResult(key, displayValue)}
+                              >
+                                {isAr ? 'تطبيق' : 'Apply'}
+                              </Button>
+                            )}
+                          </div>
+                        </div>
+                        <p className="text-muted-foreground bg-background/50 p-2 rounded text-[11px] leading-relaxed break-words">
+                          {displayValue}
+                        </p>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
             </div>
           </div>
+
           <DialogFooter>
             <Button variant="outline" onClick={() => setOpen(false)} disabled={saving}>{t('common.cancel')}</Button>
             <Button onClick={save} disabled={saving}>{saving ? '...' : (editId ? t('admin.updated') : t('admin.created'))}</Button>
