@@ -14,6 +14,7 @@ export interface Series {
   totalViews: number;
   isTrending: boolean;
   createdAt: string;
+  latestEpisodeNumber?: number;
 }
 
 export interface Episode {

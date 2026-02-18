@@ -81,7 +81,7 @@ const Index = () => {
           .select('*')
           .order('created_at', { ascending: false }),
         supabase.from('episodes')
-          .select('series_id, created_at')
+          .select('series_id, episode_number, created_at')
           .order('created_at', { ascending: false })
           .limit(100),
       ]);
@@ -102,10 +102,12 @@ const Index = () => {
       if (episodesRes.data && episodesRes.data.length > 0) {
         const seen = new Set<string>();
         const orderedSeriesIds: string[] = [];
+        const latestEpNumber: Record<string, number> = {};
         for (const ep of episodesRes.data) {
           if (!seen.has(ep.series_id)) {
             seen.add(ep.series_id);
             orderedSeriesIds.push(ep.series_id);
+            latestEpNumber[ep.series_id] = ep.episode_number;
           }
         }
 
@@ -115,7 +117,7 @@ const Index = () => {
         );
         const ordered = orderedSeriesIds
           .filter(id => seriesMap[id])
-          .map(id => mapSeries(seriesMap[id]));
+          .map(id => ({ ...mapSeries(seriesMap[id]), latestEpisodeNumber: latestEpNumber[id] }));
         setLatestEpisodeSeries(ordered);
       }
 
