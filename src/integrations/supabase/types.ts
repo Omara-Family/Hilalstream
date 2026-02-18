@@ -84,6 +84,7 @@ export type Database = {
       episodes: {
         Row: {
           created_at: string
+          download_links: Json | null
           download_url: string | null
           episode_number: number
           id: string
@@ -96,6 +97,7 @@ export type Database = {
         }
         Insert: {
           created_at?: string
+          download_links?: Json | null
           download_url?: string | null
           episode_number: number
           id?: string
@@ -108,6 +110,7 @@ export type Database = {
         }
         Update: {
           created_at?: string
+          download_links?: Json | null
           download_url?: string | null
           episode_number?: number
           id?: string
@@ -267,6 +270,7 @@ export type Database = {
       program_episodes: {
         Row: {
           created_at: string
+          download_links: Json | null
           download_url: string | null
           episode_number: number
           id: string
@@ -279,6 +283,7 @@ export type Database = {
         }
         Insert: {
           created_at?: string
+          download_links?: Json | null
           download_url?: string | null
           episode_number: number
           id?: string
@@ -291,6 +296,7 @@ export type Database = {
         }
         Update: {
           created_at?: string
+          download_links?: Json | null
           download_url?: string | null
           episode_number?: number
           id?: string

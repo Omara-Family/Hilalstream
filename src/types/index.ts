@@ -24,6 +24,7 @@ export interface Episode {
   title_en: string;
   videoServers: { name: string; url: string }[];
   downloadUrl?: string;
+  downloadLinks?: { quality: string; url: string }[];
   views: number;
   createdAt: string;
 }
