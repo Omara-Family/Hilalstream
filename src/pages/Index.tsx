@@ -66,76 +66,63 @@ const Index = () => {
   const { getGenreLabel } = useLocale();
   const [allSeries, setAllSeries] = useState<ReturnType<typeof mapSeries>[]>([]);
   const [allPrograms, setAllPrograms] = useState<ReturnType<typeof mapProgram>[]>([]);
+  const [latestEpisodeSeries, setLatestEpisodeSeries] = useState<ReturnType<typeof mapSeries>[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => { initPopAd(); }, []);
 
   useEffect(() => {
     const fetchData = async () => {
-      const [seriesRes, programsRes] = await Promise.all([
+      const [seriesRes, programsRes, episodesRes] = await Promise.all([
         supabase.from('series')
-          .select('id, title_ar, title_en, slug, description_ar, description_en, poster_image, backdrop_image, release_year, genre, tags, rating, total_views, is_trending, created_at')
+          .select('*')
           .order('created_at', { ascending: false }),
         supabase.from('programs')
           .select('*')
           .order('created_at', { ascending: false }),
+        supabase.from('episodes')
+          .select('series_id, created_at')
+          .order('created_at', { ascending: false })
+          .limit(100),
       ]);
 
+      let seriesData: ReturnType<typeof mapSeries>[];
       if (seriesRes.data && seriesRes.data.length > 0) {
-        setAllSeries(seriesRes.data.map(mapSeries));
+        seriesData = seriesRes.data.map(mapSeries);
       } else {
-        setAllSeries(mockSeries);
+        seriesData = mockSeries;
       }
+      setAllSeries(seriesData);
 
       if (programsRes.data) {
         setAllPrograms(programsRes.data.map(mapProgram));
+      }
+
+      // Build latest-episode-ordered series
+      if (episodesRes.data && episodesRes.data.length > 0) {
+        const seen = new Set<string>();
+        const orderedSeriesIds: string[] = [];
+        for (const ep of episodesRes.data) {
+          if (!seen.has(ep.series_id)) {
+            seen.add(ep.series_id);
+            orderedSeriesIds.push(ep.series_id);
+          }
+        }
+
+        // Use already-fetched series data
+        const seriesMap = Object.fromEntries(
+          (seriesRes.data || []).map(s => [s.id, s])
+        );
+        const ordered = orderedSeriesIds
+          .filter(id => seriesMap[id])
+          .map(id => mapSeries(seriesMap[id]));
+        setLatestEpisodeSeries(ordered);
       }
 
       setLoading(false);
     };
     fetchData();
   }, []);
-
-  const [latestEpisodeSeries, setLatestEpisodeSeries] = useState<ReturnType<typeof mapSeries>[]>([]);
-
-  // Fetch series ordered by latest episode added
-  useEffect(() => {
-    const fetchLatestEpisodes = async () => {
-      // Get latest episodes grouped by series
-      const { data: episodes } = await supabase
-        .from('episodes')
-        .select('series_id, created_at')
-        .order('created_at', { ascending: false })
-        .limit(100);
-
-      if (!episodes || episodes.length === 0) return;
-
-      // Keep unique series in order of latest episode
-      const seen = new Set<string>();
-      const orderedSeriesIds: string[] = [];
-      for (const ep of episodes) {
-        if (!seen.has(ep.series_id)) {
-          seen.add(ep.series_id);
-          orderedSeriesIds.push(ep.series_id);
-        }
-      }
-
-      const { data: seriesList } = await supabase
-        .from('series')
-        .select('*')
-        .in('id', orderedSeriesIds);
-
-      if (!seriesList) return;
-
-      const seriesMap = Object.fromEntries(seriesList.map(s => [s.id, s]));
-      const ordered = orderedSeriesIds
-        .filter(id => seriesMap[id])
-        .map(id => mapSeries(seriesMap[id]));
-
-      setLatestEpisodeSeries(ordered);
-    };
-    if (!loading) fetchLatestEpisodes();
-  }, [loading]);
 
   const trending = allSeries.filter(s => s.isTrending);
   const popular = [...allSeries].sort((a, b) => b.totalViews - a.totalViews);
