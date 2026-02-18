@@ -62,6 +62,14 @@ const SeriesCard = ({ series, index = 0 }: SeriesCardProps) => {
                 <Eye className="w-3 h-3" />
                 {formatViews(series.totalViews)}
               </span>
+              {series.latestEpisodeNumber && (
+                <>
+                  <span className="w-1 h-1 rounded-full bg-white/40" />
+                  <span className="flex items-center gap-1 text-primary font-semibold">
+                    EP {series.latestEpisodeNumber}
+                  </span>
+                </>
+              )}
             </div>
           </div>
         </div>
