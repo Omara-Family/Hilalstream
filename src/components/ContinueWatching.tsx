@@ -21,6 +21,7 @@ const ContinueWatching = () => {
   const { user } = useAppStore();
   const { getTitle } = useLocale();
   const [items, setItems] = useState<ContinueItem[]>([]);
+  const [loading, setLoading] = useState(true);
   const scrollRef = useRef<HTMLDivElement>(null);
   const isRtl = i18n.language === 'ar';
 
@@ -32,7 +33,10 @@ const ContinueWatching = () => {
   };
 
   useEffect(() => {
-    if (!user) return;
+    if (!user) {
+      setLoading(false);
+      return;
+    }
 
     const fetchContinue = async () => {
       const { data } = await supabase
@@ -42,7 +46,10 @@ const ContinueWatching = () => {
         .order('updated_at', { ascending: false })
         .limit(10);
 
-      if (!data || data.length === 0) return;
+      if (!data || data.length === 0) {
+        setLoading(false);
+        return;
+      }
 
       // Get episode details
       const episodeIds = data.map(d => d.episode_id);
@@ -51,7 +58,10 @@ const ContinueWatching = () => {
         .select('id, episode_number, series_id')
         .in('id', episodeIds);
 
-      if (!episodes) return;
+      if (!episodes) {
+        setLoading(false);
+        return;
+      }
 
       const seriesIds = [...new Set(episodes.map(e => e.series_id))];
       const { data: seriesList } = await supabase
@@ -59,7 +69,10 @@ const ContinueWatching = () => {
         .select('id, title_ar, title_en, slug, poster_image')
         .in('id', seriesIds);
 
-      if (!seriesList) return;
+      if (!seriesList) {
+        setLoading(false);
+        return;
+      }
 
       const seriesMap = Object.fromEntries(seriesList.map(s => [s.id, s]));
       const episodeMap = Object.fromEntries(episodes.map(e => [e.id, e]));
@@ -81,12 +94,32 @@ const ContinueWatching = () => {
         });
 
       setItems(mapped);
+      setLoading(false);
     };
 
     fetchContinue();
   }, [user]);
 
-  if (!user || items.length === 0) return null;
+  if (!user || (!loading && items.length === 0)) return null;
+
+  if (loading) {
+    return (
+      <section className="py-8">
+        <div className="container mx-auto px-4">
+          <div className="h-7 bg-muted rounded w-48 mb-5 animate-pulse" />
+          <div className="flex gap-4 overflow-hidden">
+            {Array.from({ length: 6 }).map((_, i) => (
+              <div key={i} className="flex-shrink-0 w-[160px] md:w-[200px] animate-pulse">
+                <div className="aspect-[2/3] rounded-lg bg-muted" />
+                <div className="mt-2 h-4 bg-muted rounded w-3/4" />
+                <div className="mt-1 h-3 bg-muted rounded w-1/2" />
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+    );
+  }
 
   return (
     <section className="py-8">
