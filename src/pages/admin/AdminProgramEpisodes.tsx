@@ -24,7 +24,7 @@ const emptyForm: EpisodeForm = {
   video_servers: '[]', download_url: '', download_links: [],
 };
 
-const qualityOptions = ['360p', '480p', '720p', '1080p', '4K'];
+const qualityOptions = ['240p', '360p', '480p', '720p', '1080p'];
 
 export default function AdminProgramEpisodes() {
   const { t, i18n } = useTranslation();
