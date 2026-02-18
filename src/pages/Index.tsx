@@ -172,7 +172,6 @@ const Index = () => {
             )}
 
             <SectionRow title={t('home.popular')} series={popular} viewAllLink="/browse?sort=views" />
-            <SectionRow title={t('home.latest')} series={latest} viewAllLink="/browse?sort=latest" />
 
             {allPrograms.length > 0 && (
               <ProgramRow title={isAr ? 'البرامج' : 'Programs'} programs={allPrograms} />
