@@ -12,15 +12,19 @@ import { Plus, Pencil, Trash2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
 type SeriesOption = { id: string; title_en: string };
+type DownloadLink = { quality: string; url: string };
 type EpisodeForm = {
   series_id: string; episode_number: number; title_ar: string;
   title_en: string; video_servers: string; download_url: string;
+  download_links: DownloadLink[];
 };
 
 const emptyForm: EpisodeForm = {
   series_id: '', episode_number: 1, title_ar: '', title_en: '',
-  video_servers: '[]', download_url: '',
+  video_servers: '[]', download_url: '', download_links: [],
 };
+
+const qualityOptions = ['360p', '480p', '720p', '1080p', '4K'];
 
 export default function AdminEpisodes() {
   const { t } = useTranslation();
@@ -56,6 +60,7 @@ export default function AdminEpisodes() {
       title_ar: ep.title_ar ?? '', title_en: ep.title_en ?? '',
       video_servers: JSON.stringify(ep.video_servers ?? [], null, 2),
       download_url: ep.download_url ?? '',
+      download_links: Array.isArray(ep.download_links) ? ep.download_links : [],
     });
     setOpen(true);
   };
@@ -90,6 +95,7 @@ export default function AdminEpisodes() {
       series_id: form.series_id, episode_number: form.episode_number,
       title_ar: form.title_ar, title_en: form.title_en,
       video_servers: servers, download_url: form.download_url || null,
+      download_links: form.download_links.filter(l => l.url.trim()),
     };
     const isNew = !editId;
     const { error } = isNew
@@ -194,9 +200,39 @@ export default function AdminEpisodes() {
               <label className="text-sm text-muted-foreground">{t('admin.titleAr')}</label>
               <Input value={form.title_ar} onChange={e => f('title_ar', e.target.value)} />
             </div>
-            <div className="space-y-1">
-              <label className="text-sm text-muted-foreground">{t('admin.downloadUrl')}</label>
-              <Input value={form.download_url} onChange={e => f('download_url', e.target.value)} />
+            <div className="col-span-2 space-y-1">
+              <label className="text-sm text-muted-foreground">{t('admin.downloadUrl')} (Legacy)</label>
+              <Input value={form.download_url} onChange={e => f('download_url', e.target.value)} placeholder="Single URL (optional)" />
+            </div>
+            <div className="col-span-2 space-y-2">
+              <div className="flex items-center justify-between">
+                <label className="text-sm text-muted-foreground">روابط التحميل بجودات مختلفة</label>
+                <Button type="button" variant="outline" size="sm" onClick={() => setForm(p => ({ ...p, download_links: [...p.download_links, { quality: '720p', url: '' }] }))}>
+                  <Plus className="h-3 w-3 me-1" />إضافة جودة
+                </Button>
+              </div>
+              {form.download_links.map((link, i) => (
+                <div key={i} className="flex gap-2 items-center">
+                  <Select value={link.quality} onValueChange={v => {
+                    const updated = [...form.download_links];
+                    updated[i] = { ...updated[i], quality: v };
+                    setForm(p => ({ ...p, download_links: updated }));
+                  }}>
+                    <SelectTrigger className="w-28"><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      {qualityOptions.map(q => <SelectItem key={q} value={q}>{q}</SelectItem>)}
+                    </SelectContent>
+                  </Select>
+                  <Input className="flex-1" placeholder="Download URL" value={link.url} onChange={e => {
+                    const updated = [...form.download_links];
+                    updated[i] = { ...updated[i], url: e.target.value };
+                    setForm(p => ({ ...p, download_links: updated }));
+                  }} />
+                  <Button type="button" variant="ghost" size="icon" onClick={() => {
+                    setForm(p => ({ ...p, download_links: p.download_links.filter((_, j) => j !== i) }));
+                  }}><Trash2 className="h-4 w-4 text-destructive" /></Button>
+                </div>
+              ))}
             </div>
             <div className="col-span-2 space-y-1">
               <label className="text-sm text-muted-foreground">{t('admin.videoServers')}</label>
