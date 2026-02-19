@@ -239,7 +239,10 @@ const Watch = () => {
                 )}
               </>
             ) : currentEp.downloadUrl ? (
-              <a href={currentEp.downloadUrl} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-secondary text-secondary-foreground hover:bg-surface-hover transition-colors text-sm"><Download className="w-4 h-4" />{t('watch.download')}</a>
+              <>
+                <a href={currentEp.downloadUrl} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-secondary text-secondary-foreground hover:bg-surface-hover transition-colors text-sm"><Download className="w-4 h-4" />{t('watch.download')}</a>
+                <span className="text-xs text-muted-foreground self-center">({isArabic ? 'متعدد الجودات' : 'Multi-quality'})</span>
+              </>
             ) : null}
           </div>
 
