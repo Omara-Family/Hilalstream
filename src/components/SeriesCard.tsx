@@ -1,8 +1,9 @@
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { Star, Play } from 'lucide-react';
+import { Star, Play, Eye } from 'lucide-react';
 import type { Series } from '@/types';
 import { useLocale } from '@/hooks/useLocale';
+import { useAppStore } from '@/store/useAppStore';
 
 interface SeriesCardProps {
   series: Series;
@@ -10,7 +11,8 @@ interface SeriesCardProps {
 }
 
 const SeriesCard = ({ series, index = 0 }: SeriesCardProps) => {
-  const { getTitle } = useLocale();
+  const { getTitle, formatViews } = useLocale();
+  const isAdmin = useAppStore((s) => s.isAdmin);
 
   return (
     <motion.div
@@ -68,6 +70,15 @@ const SeriesCard = ({ series, index = 0 }: SeriesCardProps) => {
                   <span className="w-1 h-1 rounded-full bg-white/40" />
                   <span className="flex items-center gap-1 text-primary font-semibold">
                     EP {series.latestEpisodeNumber}
+                  </span>
+                </>
+              )}
+              {isAdmin && (
+                <>
+                  <span className="w-1 h-1 rounded-full bg-white/40" />
+                  <span className="flex items-center gap-1">
+                    <Eye className="w-3 h-3" />
+                    {formatViews(series.totalViews)}
                   </span>
                 </>
               )}
