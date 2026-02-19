@@ -60,7 +60,7 @@ const SeriesCard = ({ series, index = 0 }: SeriesCardProps) => {
               {series.genre && series.genre.length > 0 && (
                 <>
                   <span className="w-1 h-1 rounded-full bg-white/40" />
-                  <span className="font-medium">{series.genre[0]}</span>
+                  <span className="font-medium capitalize">{series.genre[0]}</span>
                 </>
               )}
               {series.latestEpisodeNumber && (
