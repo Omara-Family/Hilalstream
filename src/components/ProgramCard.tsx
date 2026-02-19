@@ -1,6 +1,6 @@
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { Star, Eye, Play } from 'lucide-react';
+import { Star, Play } from 'lucide-react';
 import type { Series } from '@/types';
 import { useLocale } from '@/hooks/useLocale';
 
@@ -42,11 +42,6 @@ const ProgramCard = ({ program, index = 0 }: ProgramCardProps) => {
             </h3>
             <div className="flex items-center gap-2 mt-1.5 text-[11px] text-white/60">
               <span className="font-medium">{program.releaseYear}</span>
-              <span className="w-1 h-1 rounded-full bg-white/40" />
-              <span className="flex items-center gap-1">
-                <Eye className="w-3 h-3" />
-                {formatViews(program.totalViews)}
-              </span>
             </div>
           </div>
         </div>
