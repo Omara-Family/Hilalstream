@@ -256,7 +256,7 @@ const SeriesDetail = () => {
             <div className="flex flex-wrap items-center gap-4 mb-4 text-sm text-muted-foreground">
               <span className="flex items-center gap-1 text-primary"><Star className="w-4 h-4 fill-primary" />{series.rating}</span>
               <span className="flex items-center gap-1"><Calendar className="w-4 h-4" />{series.releaseYear}</span>
-              <span className="flex items-center gap-1"><Eye className="w-4 h-4" />{formatViews(series.totalViews)} {t('series.views')}</span>
+              {isAdmin && <span className="flex items-center gap-1"><Eye className="w-4 h-4" />{formatViews(series.totalViews)} {t('series.views')}</span>}
               <span className="flex items-center gap-1"><Film className="w-4 h-4" />{episodes.length} {t('series.episodes')}</span>
             </div>
             <div className="flex flex-wrap gap-2 mb-4">
@@ -294,7 +294,7 @@ const SeriesDetail = () => {
                     </div>
                     <div className="flex-1 min-w-0">
                       <h3 className="font-semibold text-foreground">{t('series.episode')} {ep.episodeNumber} - {getTitle(ep)}</h3>
-                      <p className="text-xs text-muted-foreground flex items-center gap-2 mt-0.5"><Eye className="w-3 h-3" />{formatViews(ep.views)} {t('series.views')}</p>
+                      {isAdmin && <p className="text-xs text-muted-foreground flex items-center gap-2 mt-0.5"><Eye className="w-3 h-3" />{formatViews(ep.views)} {t('series.views')}</p>}
                     </div>
                     <Play className="w-5 h-5 text-muted-foreground group-hover:text-primary transition-colors" />
                   </Link>
