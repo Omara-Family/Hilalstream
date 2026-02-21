@@ -128,7 +128,24 @@ serve(async (req) => {
       link: `/series/${series_slug}`,
     }));
 
-    await supabase.from("notifications").insert(notifications);
+    // Notify admins about the new series
+    const { data: adminRoles } = await supabase
+      .from("user_roles")
+      .select("user_id")
+      .eq("role", "admin");
+    const adminIds = (adminRoles || []).map((r: any) => r.user_id);
+
+    const adminNotifications = adminIds.map((adminId: string) => ({
+      user_id: adminId,
+      type: "admin_new_series",
+      title_en: `New Series Added`,
+      title_ar: `تم إضافة مسلسل جديد`,
+      message_en: `${seriesTitle} has been added to HilalStream.`,
+      message_ar: `${seriesTitleAr} تم إضافته إلى HilalStream.`,
+      link: `/series/${series_slug}`,
+    }));
+
+    await supabase.from("notifications").insert([...notifications, ...adminNotifications]);
 
     return new Response(JSON.stringify({ success: true, sent: sentCount, total: emails.length }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
