@@ -13,7 +13,7 @@ serve(async (req) => {
   }
 
   try {
-    const { series_id, series_title_en, series_title_ar, series_slug, episode_number, episode_title_en, episode_title_ar, episode_id } = await req.json();
+    const { series_id, series_title_en, series_title_ar, series_slug, poster_image } = await req.json();
 
     if (!series_id || !series_slug) {
       throw new Error("series_id and series_slug are required");
@@ -23,43 +23,31 @@ serve(async (req) => {
     const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const supabase = createClient(supabaseUrl, serviceRoleKey);
 
-    const referenceId = episode_id || series_id;
+    // Get users with newsletter_opt_in = true
+    const { data: optedInProfiles } = await supabase
+      .from("profiles")
+      .select("id, name")
+      .eq("newsletter_opt_in", true);
 
-    // Get users who have this series in favorites AND have favorites_notifications enabled
-    const { data: favUsers } = await supabase
-      .from("favorites")
-      .select("user_id")
-      .eq("series_id", series_id);
-
-    const favUserIds = (favUsers || []).map((f: any) => f.user_id);
-
-    // Get profiles with favorites_notifications = true for fav users
-    let eligibleUserIds: string[] = [];
-    if (favUserIds.length > 0) {
-      const { data: eligibleProfiles } = await supabase
-        .from("profiles")
-        .select("id")
-        .in("id", favUserIds)
-        .eq("favorites_notifications", true);
-      eligibleUserIds = (eligibleProfiles || []).map((p: any) => p.id);
-    }
-
-    if (eligibleUserIds.length === 0) {
-      return new Response(JSON.stringify({ success: true, sent: 0, message: "No eligible users" }), {
+    const eligibleUsers = optedInProfiles || [];
+    if (eligibleUsers.length === 0) {
+      return new Response(JSON.stringify({ success: true, sent: 0, message: "No opted-in users" }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
-    // Check email_logs for deduplication
+    const eligibleUserIds = eligibleUsers.map((p: any) => p.id);
+
+    // Deduplication check
     const { data: alreadySent } = await supabase
       .from("email_logs")
       .select("user_id")
-      .eq("type", "favorite_update")
-      .eq("reference_id", referenceId)
+      .eq("type", "newsletter")
+      .eq("reference_id", series_id)
       .in("user_id", eligibleUserIds);
 
     const alreadySentIds = new Set((alreadySent || []).map((l: any) => l.user_id));
-    const usersToNotify = eligibleUserIds.filter((id) => !alreadySentIds.has(id));
+    const usersToNotify = eligibleUsers.filter((u: any) => !alreadySentIds.has(u.id));
 
     if (usersToNotify.length === 0) {
       return new Response(JSON.stringify({ success: true, sent: 0, message: "All already notified" }), {
@@ -67,26 +55,19 @@ serve(async (req) => {
       });
     }
 
-    // Get auth users for emails
+    // Get auth emails
     const { data: authUsers } = await supabase.auth.admin.listUsers({ perPage: 1000 });
     const authMap = new Map((authUsers?.users || []).map((u: any) => [u.id, u.email]));
 
-    // Get profile names
-    const { data: profiles } = await supabase
-      .from("profiles")
-      .select("id, name")
-      .in("id", usersToNotify);
-    const profileMap = new Map((profiles || []).map((p: any) => [p.id, p.name]));
-
     const emails = usersToNotify
-      .filter((id) => authMap.has(id))
-      .map((id) => ({
-        userId: id,
-        email: authMap.get(id)!,
-        name: profileMap.get(id) || "Viewer",
+      .filter((u: any) => authMap.has(u.id))
+      .map((u: any) => ({
+        userId: u.id,
+        email: authMap.get(u.id)!,
+        name: u.name || "Viewer",
       }));
 
-    // Send emails via SMTP
+    // SMTP setup
     const SMTP_HOST = Deno.env.get("SMTP_HOST");
     const SMTP_PORT = Deno.env.get("SMTP_PORT") || "465";
     const SMTP_USER = Deno.env.get("SMTP_USER");
@@ -105,11 +86,9 @@ serve(async (req) => {
     });
 
     const siteUrl = "https://hilal-stream.lovable.app";
-    const watchUrl = `${siteUrl}/watch/${series_slug}/${episode_number}`;
-    const epTitle = episode_title_en || `Episode ${episode_number}`;
-    const epTitleAr = episode_title_ar || `الحلقة ${episode_number}`;
-    const seriesTitle = series_title_en || "Your favorite series";
-    const seriesTitleAr = series_title_ar || "مسلسلك المفضل";
+    const seriesUrl = `${siteUrl}/series/${series_slug}`;
+    const seriesTitle = series_title_en || "New Series";
+    const seriesTitleAr = series_title_ar || "مسلسل جديد";
 
     let sentCount = 0;
     const emailLogs: any[] = [];
@@ -119,34 +98,34 @@ serve(async (req) => {
         await transporter.sendMail({
           from: `"HilalStream" <${SMTP_USER}>`,
           to: email,
-          subject: `🎬 New Episode: ${seriesTitle} - ${epTitle}`,
-          html: buildNewEpisodeEmail(name, seriesTitle, seriesTitleAr, epTitle, epTitleAr, episode_number, watchUrl),
+          subject: `🌟 New Series: ${seriesTitle} - Now on HilalStream!`,
+          html: buildNewSeriesEmail(name, seriesTitle, seriesTitleAr, seriesUrl, poster_image),
         });
         sentCount++;
         emailLogs.push({
           user_id: userId,
-          type: "favorite_update",
-          reference_id: referenceId,
+          type: "newsletter",
+          reference_id: series_id,
         });
       } catch (emailErr) {
         console.error(`Failed to send to ${email}:`, emailErr);
       }
     }
 
-    // Log sent emails for deduplication
+    // Log sent emails
     if (emailLogs.length > 0) {
       await supabase.from("email_logs").insert(emailLogs);
     }
 
-    // Also create in-app notifications for all fav users (regardless of email pref)
-    const notifications = usersToNotify.map((userId: string) => ({
-      user_id: userId,
-      type: "new_episode",
-      title_en: `New Episode Available!`,
-      title_ar: `حلقة جديدة متاحة!`,
-      message_en: `${seriesTitle} - ${epTitle} is now live!`,
-      message_ar: `${seriesTitleAr} - ${epTitleAr} متاحة الآن!`,
-      link: `/watch/${series_slug}/${episode_number}`,
+    // In-app notifications for opted-in users
+    const notifications = usersToNotify.map((u: any) => ({
+      user_id: u.id,
+      type: "new_series",
+      title_en: `New Series Added!`,
+      title_ar: `مسلسل جديد!`,
+      message_en: `${seriesTitle} is now available on HilalStream!`,
+      message_ar: `${seriesTitleAr} متاح الآن على HilalStream!`,
+      link: `/series/${series_slug}`,
     }));
 
     await supabase.from("notifications").insert(notifications);
@@ -155,7 +134,7 @@ serve(async (req) => {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   } catch (error) {
-    console.error("Notify error:", error);
+    console.error("Notify new series error:", error);
     return new Response(JSON.stringify({ success: false, error: error.message }), {
       status: 500,
       headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -163,10 +142,14 @@ serve(async (req) => {
   }
 });
 
-function buildNewEpisodeEmail(
+function buildNewSeriesEmail(
   name: string, seriesTitle: string, seriesTitleAr: string,
-  epTitle: string, epTitleAr: string, epNumber: number, watchUrl: string
+  seriesUrl: string, posterImage?: string
 ) {
+  const posterBlock = posterImage
+    ? `<img src="${escapeHtml(posterImage)}" alt="${escapeHtml(seriesTitle)}" style="width:100%;max-height:200px;object-fit:cover;border-radius:12px;margin-bottom:20px;" />`
+    : '';
+
   return `
 <!DOCTYPE html>
 <html dir="ltr">
@@ -175,28 +158,25 @@ function buildNewEpisodeEmail(
   <div style="max-width:600px;margin:40px auto;background:linear-gradient(135deg,#1a1a2e 0%,#16213e 100%);border-radius:16px;overflow:hidden;border:1px solid #2a2a4a;">
     <div style="background:linear-gradient(135deg,#c9a84c 0%,#e8c65a 100%);padding:24px 32px;text-align:center;">
       <h1 style="margin:0;color:#0a0a0a;font-size:22px;font-weight:700;">HilalStream</h1>
-      <p style="margin:6px 0 0;color:#1a1a2e;font-size:14px;">🎬 New Episode Alert!</p>
+      <p style="margin:6px 0 0;color:#1a1a2e;font-size:14px;">🌟 New Series Alert!</p>
     </div>
     <div style="padding:36px 32px;">
       <h2 style="margin:0 0 8px;color:#f1f1f1;font-size:22px;">Hey ${escapeHtml(name)}!</h2>
       <p style="color:#d1d5db;font-size:15px;line-height:1.7;margin:0 0 24px;">
-        Great news! A new episode from one of your favorite series is now available to watch.
+        We just added a brand new series to our collection. Check it out!
       </p>
-      <div style="padding:20px;background:#0f0f23;border-radius:14px;border:1px solid #2a2a4a;margin-bottom:24px;">
-        <p style="margin:0 0 4px;color:#c9a84c;font-size:16px;font-weight:700;">${escapeHtml(seriesTitle)}</p>
-        <p style="margin:0 0 4px;color:#9ca3af;font-size:14px;direction:rtl;text-align:right;">${escapeHtml(seriesTitleAr)}</p>
-        <div style="margin-top:12px;padding-top:12px;border-top:1px solid #2a2a4a;">
-          <p style="margin:0;color:#e5e5e5;font-size:15px;">📺 Episode ${epNumber}: ${escapeHtml(epTitle)}</p>
-          <p style="margin:4px 0 0;color:#9ca3af;font-size:13px;direction:rtl;text-align:right;">${escapeHtml(epTitleAr)}</p>
-        </div>
+      ${posterBlock}
+      <div style="padding:20px;background:#0f0f23;border-radius:14px;border:1px solid #2a2a4a;margin-bottom:24px;text-align:center;">
+        <p style="margin:0 0 4px;color:#c9a84c;font-size:18px;font-weight:700;">${escapeHtml(seriesTitle)}</p>
+        <p style="margin:0;color:#9ca3af;font-size:15px;direction:rtl;">${escapeHtml(seriesTitleAr)}</p>
       </div>
       <div style="text-align:center;margin:28px 0;">
-        <a href="${watchUrl}" style="display:inline-block;padding:14px 48px;background:linear-gradient(135deg,#c9a84c 0%,#e8c65a 100%);color:#0a0a0a;text-decoration:none;border-radius:12px;font-weight:700;font-size:15px;">
-          Watch Now →
+        <a href="${seriesUrl}" style="display:inline-block;padding:14px 48px;background:linear-gradient(135deg,#c9a84c 0%,#e8c65a 100%);color:#0a0a0a;text-decoration:none;border-radius:12px;font-weight:700;font-size:15px;">
+          Explore Now →
         </a>
       </div>
       <p style="color:#6b7280;font-size:12px;text-align:center;margin:0;">
-        You're receiving this because you added this series to your favorites on HilalStream.
+        You're receiving this because you opted in to new series notifications on HilalStream.
       </p>
     </div>
     <div style="padding:16px 32px;border-top:1px solid #2a2a4a;text-align:center;">
