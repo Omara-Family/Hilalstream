@@ -140,14 +140,35 @@ export default function AdminSeries() {
         genre: form.genre.split(',').map(s => s.trim()).filter(Boolean),
         tags: form.tags.split(',').map(s => s.trim()).filter(Boolean),
       };
-      const { error } = editId
-        ? await supabase.from('series').update(payload).eq('id', editId)
-        : await supabase.from('series').insert(payload);
-      if (error) {
-        toast({ title: t('common.error'), description: error.message, variant: 'destructive' });
+
+      if (editId) {
+        const { error } = await supabase.from('series').update(payload).eq('id', editId);
+        if (error) {
+          toast({ title: t('common.error'), description: error.message, variant: 'destructive' });
+        } else {
+          toast({ title: t('admin.updated') });
+          setOpen(false); load();
+        }
       } else {
-        toast({ title: editId ? t('admin.updated') : t('admin.created') });
-        setOpen(false); load();
+        const { data, error } = await supabase.from('series').insert(payload).select().single();
+        if (error) {
+          toast({ title: t('common.error'), description: error.message, variant: 'destructive' });
+        } else {
+          toast({ title: t('admin.created') });
+          setOpen(false); load();
+          // Notify users & admins about new series
+          if (data) {
+            supabase.functions.invoke('notify-new-series', {
+              body: {
+                series_id: data.id,
+                series_title_en: form.title_en,
+                series_title_ar: form.title_ar,
+                series_slug: form.slug,
+                poster_image: form.poster_image,
+              },
+            }).catch(err => console.error('Notify new series failed:', err));
+          }
+        }
       }
     } finally {
       setSaving(false);
