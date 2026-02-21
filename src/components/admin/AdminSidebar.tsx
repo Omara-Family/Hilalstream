@@ -1,4 +1,4 @@
-import { Film, Tv, Users, LayoutDashboard, ArrowLeft } from 'lucide-react';
+import { Film, Tv, Users, LayoutDashboard, ArrowLeft, Mail } from 'lucide-react';
 import { NavLink } from '@/components/NavLink';
 import { useLocation, Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
@@ -29,6 +29,7 @@ export function AdminSidebar() {
     { title: isAr ? 'البرامج' : 'Programs', url: '/admin/programs', icon: Tv },
     { title: isAr ? 'حلقات البرامج' : 'Program Episodes', url: '/admin/program-episodes', icon: Film },
     { title: t('admin.users'), url: '/admin/users', icon: Users },
+    { title: isAr ? 'سجل الإيميلات' : 'Email Logs', url: '/admin/email-logs', icon: Mail },
   ];
 
   return (
