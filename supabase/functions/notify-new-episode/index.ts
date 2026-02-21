@@ -149,12 +149,28 @@ serve(async (req) => {
       link: `/watch/${series_slug}/${episode_number}`,
     }));
 
-    // Notify admins about the new episode
+    // Notify admins via email
     const { data: adminRoles } = await supabase
       .from("user_roles")
       .select("user_id")
       .eq("role", "admin");
     const adminIds = (adminRoles || []).map((r: any) => r.user_id);
+
+    for (const adminId of adminIds) {
+      const adminEmail = authMap.get(adminId);
+      if (adminEmail) {
+        try {
+          await transporter.sendMail({
+            from: `"HilalStream" <${SMTP_USER}>`,
+            to: adminEmail,
+            subject: `🔔 Admin: New Episode Added - ${seriesTitle} Ep ${episode_number}`,
+            html: buildAdminEpisodeEmail(seriesTitle, seriesTitleAr, epTitle, epTitleAr, episode_number, watchUrl),
+          });
+        } catch (e) {
+          console.error(`Failed admin email to ${adminEmail}:`, e);
+        }
+      }
+    }
 
     const adminNotifications = adminIds.map((adminId: string) => ({
       user_id: adminId,
@@ -218,6 +234,44 @@ function buildNewEpisodeEmail(
     </div>
     <div style="padding:16px 32px;border-top:1px solid #2a2a4a;text-align:center;">
       <p style="margin:0;color:#4b5563;font-size:11px;">© 2025 HilalStream. All rights reserved.</p>
+    </div>
+  </div>
+</body>
+</html>`;
+}
+
+function buildAdminEpisodeEmail(
+  seriesTitle: string, seriesTitleAr: string,
+  epTitle: string, epTitleAr: string, epNumber: number, watchUrl: string
+) {
+  return `
+<!DOCTYPE html>
+<html dir="ltr">
+<head><meta charset="utf-8"></head>
+<body style="margin:0;padding:0;background:#0a0a0a;font-family:'Segoe UI',Tahoma,Geneva,Verdana,sans-serif;">
+  <div style="max-width:600px;margin:40px auto;background:linear-gradient(135deg,#1a1a2e 0%,#16213e 100%);border-radius:16px;overflow:hidden;border:1px solid #2a2a4a;">
+    <div style="background:linear-gradient(135deg,#c9a84c 0%,#e8c65a 100%);padding:24px 32px;text-align:center;">
+      <h1 style="margin:0;color:#0a0a0a;font-size:22px;font-weight:700;">HilalStream Admin</h1>
+      <p style="margin:6px 0 0;color:#1a1a2e;font-size:14px;">🔔 New Episode Added</p>
+    </div>
+    <div style="padding:36px 32px;">
+      <h2 style="margin:0 0 16px;color:#f1f1f1;font-size:20px;">Episode Added Successfully</h2>
+      <div style="padding:20px;background:#0f0f23;border-radius:14px;border:1px solid #2a2a4a;margin-bottom:24px;">
+        <p style="margin:0 0 4px;color:#c9a84c;font-size:16px;font-weight:700;">${escapeHtml(seriesTitle)}</p>
+        <p style="margin:0 0 4px;color:#9ca3af;font-size:14px;direction:rtl;text-align:right;">${escapeHtml(seriesTitleAr)}</p>
+        <div style="margin-top:12px;padding-top:12px;border-top:1px solid #2a2a4a;">
+          <p style="margin:0;color:#e5e5e5;font-size:15px;">📺 Episode ${epNumber}: ${escapeHtml(epTitle)}</p>
+          <p style="margin:4px 0 0;color:#9ca3af;font-size:13px;direction:rtl;text-align:right;">${escapeHtml(epTitleAr)}</p>
+        </div>
+      </div>
+      <div style="text-align:center;margin:28px 0;">
+        <a href="${watchUrl}" style="display:inline-block;padding:14px 48px;background:linear-gradient(135deg,#c9a84c 0%,#e8c65a 100%);color:#0a0a0a;text-decoration:none;border-radius:12px;font-weight:700;font-size:15px;">
+          View Episode →
+        </a>
+      </div>
+    </div>
+    <div style="padding:16px 32px;border-top:1px solid #2a2a4a;text-align:center;">
+      <p style="margin:0;color:#4b5563;font-size:11px;">© 2025 HilalStream Admin Panel</p>
     </div>
   </div>
 </body>
