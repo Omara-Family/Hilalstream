@@ -81,6 +81,30 @@ export type Database = {
           },
         ]
       }
+      email_logs: {
+        Row: {
+          id: string
+          reference_id: string
+          sent_at: string
+          type: string
+          user_id: string
+        }
+        Insert: {
+          id?: string
+          reference_id: string
+          sent_at?: string
+          type?: string
+          user_id: string
+        }
+        Update: {
+          id?: string
+          reference_id?: string
+          sent_at?: string
+          type?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       episodes: {
         Row: {
           created_at: string
@@ -239,30 +263,36 @@ export type Database = {
           avatar_url: string | null
           created_at: string
           current_streak: number
+          favorites_notifications: boolean
           id: string
           last_watch_date: string | null
           longest_streak: number
           name: string
+          newsletter_opt_in: boolean
           updated_at: string | null
         }
         Insert: {
           avatar_url?: string | null
           created_at?: string
           current_streak?: number
+          favorites_notifications?: boolean
           id: string
           last_watch_date?: string | null
           longest_streak?: number
           name?: string
+          newsletter_opt_in?: boolean
           updated_at?: string | null
         }
         Update: {
           avatar_url?: string | null
           created_at?: string
           current_streak?: number
+          favorites_notifications?: boolean
           id?: string
           last_watch_date?: string | null
           longest_streak?: number
           name?: string
+          newsletter_opt_in?: boolean
           updated_at?: string | null
         }
         Relationships: []

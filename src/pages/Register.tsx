@@ -6,15 +6,19 @@ import { Link, useNavigate } from 'react-router-dom';
 import Navbar from '@/components/Navbar';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/hooks/use-toast';
+import { Checkbox } from '@/components/ui/checkbox';
 
 const Register = () => {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
+  const isArabic = i18n.language?.startsWith('ar');
   const navigate = useNavigate();
   const [showPass, setShowPass] = useState(false);
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
+  const [newsletterOptIn, setNewsletterOptIn] = useState(false);
+  const [favoritesNotifications, setFavoritesNotifications] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -23,7 +27,7 @@ const Register = () => {
       return;
     }
     setLoading(true);
-    const { error } = await supabase.auth.signUp({
+    const { data: signUpData, error } = await supabase.auth.signUp({
       email,
       password,
       options: {
@@ -31,17 +35,31 @@ const Register = () => {
         emailRedirectTo: window.location.origin,
       },
     });
-    setLoading(false);
     if (error) {
+      setLoading(false);
       toast({ title: t('common.error'), description: error.message, variant: 'destructive' });
-    } else {
-      // Send welcome email (fire-and-forget)
-      supabase.functions.invoke('send-email', {
-        body: { type: 'welcome', to: email, name },
-      }).catch(console.error);
-      toast({ title: '✅', description: 'Check your email to confirm your account' });
-      navigate('/login');
+      return;
     }
+
+    // Update notification preferences in profile
+    if (signUpData.user) {
+      await supabase
+        .from('profiles')
+        .update({
+          newsletter_opt_in: newsletterOptIn,
+          favorites_notifications: favoritesNotifications,
+        })
+        .eq('id', signUpData.user.id);
+    }
+
+    setLoading(false);
+
+    // Send welcome email (fire-and-forget)
+    supabase.functions.invoke('send-email', {
+      body: { type: 'welcome', to: email, name },
+    }).catch(console.error);
+    toast({ title: '✅', description: 'Check your email to confirm your account' });
+    navigate('/login');
   };
 
   return (
@@ -134,6 +152,39 @@ const Register = () => {
                 </button>
               </div>
               <p className="text-xs text-muted-foreground/70 ps-1">Min. 6 characters</p>
+            </div>
+
+            {/* Notification Preferences */}
+            <div className="space-y-3 pt-2 border-t border-border/30">
+              <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                {isArabic ? 'تفضيلات الإشعارات' : 'Notification Preferences'}
+              </p>
+              <div className="flex items-start gap-3">
+                <Checkbox
+                  id="newsletter"
+                  checked={newsletterOptIn}
+                  onCheckedChange={(v) => setNewsletterOptIn(v === true)}
+                  className="mt-0.5"
+                />
+                <label htmlFor="newsletter" className="text-sm text-foreground/80 cursor-pointer leading-snug">
+                  {isArabic
+                    ? 'أوافق على تلقي إشعارات بالبريد الإلكتروني عن المسلسلات الجديدة المضافة.'
+                    : 'I agree to receive email notifications about newly added series.'}
+                </label>
+              </div>
+              <div className="flex items-start gap-3">
+                <Checkbox
+                  id="favNotif"
+                  checked={favoritesNotifications}
+                  onCheckedChange={(v) => setFavoritesNotifications(v === true)}
+                  className="mt-0.5"
+                />
+                <label htmlFor="favNotif" className="text-sm text-foreground/80 cursor-pointer leading-snug">
+                  {isArabic
+                    ? 'أخبرني عند إضافة حلقات جديدة لمسلسلاتي المفضلة.'
+                    : 'Notify me when new episodes are added to my favorite series.'}
+                </label>
+              </div>
             </div>
 
             {/* Submit */}

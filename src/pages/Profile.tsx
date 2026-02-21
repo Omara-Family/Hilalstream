@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
-import { Camera, Save, Loader2, User } from 'lucide-react';
+import { Camera, Save, Loader2, User, Bell } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAppStore } from '@/store/useAppStore';
 import Navbar from '@/components/Navbar';
@@ -11,10 +11,12 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
+import { Switch } from '@/components/ui/switch';
 import { useToast } from '@/hooks/use-toast';
 
 const Profile = () => {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
+  const isArabic = i18n.language?.startsWith('ar');
   const navigate = useNavigate();
   const { user, isAuthenticated, isLoading } = useAppStore();
   const { toast } = useToast();
@@ -25,6 +27,8 @@ const Profile = () => {
   const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [newsletterOptIn, setNewsletterOptIn] = useState(false);
+  const [favoritesNotifications, setFavoritesNotifications] = useState(false);
 
   useEffect(() => {
     if (!isLoading && !isAuthenticated) {
@@ -34,13 +38,15 @@ const Profile = () => {
     if (user) {
       supabase
         .from('profiles')
-        .select('name, avatar_url')
+        .select('name, avatar_url, newsletter_opt_in, favorites_notifications')
         .eq('id', user.id)
         .single()
         .then(({ data }) => {
           if (data) {
             setName(data.name || '');
             setAvatarUrl(data.avatar_url);
+            setNewsletterOptIn((data as any).newsletter_opt_in ?? false);
+            setFavoritesNotifications((data as any).favorites_notifications ?? false);
           }
           setLoading(false);
         });
@@ -85,7 +91,11 @@ const Profile = () => {
 
     const { error } = await supabase
       .from('profiles')
-      .update({ name: name.trim() })
+      .update({
+        name: name.trim(),
+        newsletter_opt_in: newsletterOptIn,
+        favorites_notifications: favoritesNotifications,
+      } as any)
       .eq('id', user.id);
 
     setSaving(false);
@@ -93,7 +103,7 @@ const Profile = () => {
     if (error) {
       toast({ title: 'Error', description: error.message, variant: 'destructive' });
     } else {
-      toast({ title: 'تم حفظ التغييرات' });
+      toast({ title: isArabic ? 'تم حفظ التغييرات' : 'Changes saved' });
     }
   };
 
@@ -163,6 +173,42 @@ const Profile = () => {
               disabled
               className="bg-muted border-border text-muted-foreground"
             />
+          </div>
+
+          {/* Notification Preferences */}
+          <div className="space-y-4 pt-4 border-t border-border/50">
+            <div className="flex items-center gap-2 mb-2">
+              <Bell className="w-4 h-4 text-primary" />
+              <h3 className="text-sm font-semibold text-foreground">
+                {isArabic ? 'تفضيلات الإشعارات' : 'Notification Preferences'}
+              </h3>
+            </div>
+
+            <div className="flex items-center justify-between gap-4">
+              <label htmlFor="newsletter-toggle" className="text-sm text-foreground/80 flex-1 cursor-pointer">
+                {isArabic
+                  ? 'إشعارات البريد عن المسلسلات الجديدة'
+                  : 'Email notifications for new series'}
+              </label>
+              <Switch
+                id="newsletter-toggle"
+                checked={newsletterOptIn}
+                onCheckedChange={setNewsletterOptIn}
+              />
+            </div>
+
+            <div className="flex items-center justify-between gap-4">
+              <label htmlFor="fav-toggle" className="text-sm text-foreground/80 flex-1 cursor-pointer">
+                {isArabic
+                  ? 'إشعارات عند إضافة حلقات لمفضلاتي'
+                  : 'Notify when new episodes added to favorites'}
+              </label>
+              <Switch
+                id="fav-toggle"
+                checked={favoritesNotifications}
+                onCheckedChange={setFavoritesNotifications}
+              />
+            </div>
           </div>
 
           {/* Save */}
