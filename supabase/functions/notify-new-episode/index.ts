@@ -24,69 +24,14 @@ serve(async (req) => {
     const supabase = createClient(supabaseUrl, serviceRoleKey);
 
     const referenceId = episode_id || series_id;
+    const siteUrl = "https://hilal-stream.lovable.app";
+    const watchUrl = `${siteUrl}/watch/${series_slug}/${episode_number}`;
+    const epTitle = episode_title_en || `Episode ${episode_number}`;
+    const epTitleAr = episode_title_ar || `الحلقة ${episode_number}`;
+    const seriesTitle = series_title_en || "Your favorite series";
+    const seriesTitleAr = series_title_ar || "مسلسلك المفضل";
 
-    // Get users who have this series in favorites AND have favorites_notifications enabled
-    const { data: favUsers } = await supabase
-      .from("favorites")
-      .select("user_id")
-      .eq("series_id", series_id);
-
-    const favUserIds = (favUsers || []).map((f: any) => f.user_id);
-
-    // Get profiles with favorites_notifications = true for fav users
-    let eligibleUserIds: string[] = [];
-    if (favUserIds.length > 0) {
-      const { data: eligibleProfiles } = await supabase
-        .from("profiles")
-        .select("id")
-        .in("id", favUserIds)
-        .eq("favorites_notifications", true);
-      eligibleUserIds = (eligibleProfiles || []).map((p: any) => p.id);
-    }
-
-    if (eligibleUserIds.length === 0) {
-      return new Response(JSON.stringify({ success: true, sent: 0, message: "No eligible users" }), {
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
-    }
-
-    // Check email_logs for deduplication
-    const { data: alreadySent } = await supabase
-      .from("email_logs")
-      .select("user_id")
-      .eq("type", "favorite_update")
-      .eq("reference_id", referenceId)
-      .in("user_id", eligibleUserIds);
-
-    const alreadySentIds = new Set((alreadySent || []).map((l: any) => l.user_id));
-    const usersToNotify = eligibleUserIds.filter((id) => !alreadySentIds.has(id));
-
-    if (usersToNotify.length === 0) {
-      return new Response(JSON.stringify({ success: true, sent: 0, message: "All already notified" }), {
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
-    }
-
-    // Get auth users for emails
-    const { data: authUsers } = await supabase.auth.admin.listUsers({ perPage: 1000 });
-    const authMap = new Map((authUsers?.users || []).map((u: any) => [u.id, u.email]));
-
-    // Get profile names
-    const { data: profiles } = await supabase
-      .from("profiles")
-      .select("id, name")
-      .in("id", usersToNotify);
-    const profileMap = new Map((profiles || []).map((p: any) => [p.id, p.name]));
-
-    const emails = usersToNotify
-      .filter((id) => authMap.has(id))
-      .map((id) => ({
-        userId: id,
-        email: authMap.get(id)!,
-        name: profileMap.get(id) || "Viewer",
-      }));
-
-    // Send emails via SMTP
+    // Setup SMTP
     const SMTP_HOST = Deno.env.get("SMTP_HOST");
     const SMTP_PORT = Deno.env.get("SMTP_PORT") || "465";
     const SMTP_USER = Deno.env.get("SMTP_USER");
@@ -104,57 +49,18 @@ serve(async (req) => {
       auth: { user: SMTP_USER, pass: SMTP_PASS },
     });
 
-    const siteUrl = "https://hilal-stream.lovable.app";
-    const watchUrl = `${siteUrl}/watch/${series_slug}/${episode_number}`;
-    const epTitle = episode_title_en || `Episode ${episode_number}`;
-    const epTitleAr = episode_title_ar || `الحلقة ${episode_number}`;
-    const seriesTitle = series_title_en || "Your favorite series";
-    const seriesTitleAr = series_title_ar || "مسلسلك المفضل";
+    // Get auth users for emails
+    const { data: authUsers } = await supabase.auth.admin.listUsers({ perPage: 1000 });
+    const authMap = new Map((authUsers?.users || []).map((u: any) => [u.id, u.email]));
 
-    let sentCount = 0;
-    const emailLogs: any[] = [];
-
-    for (const { userId, email, name } of emails) {
-      try {
-        await transporter.sendMail({
-          from: `"HilalStream" <${SMTP_USER}>`,
-          to: email,
-          subject: `🎬 New Episode: ${seriesTitle} - ${epTitle}`,
-          html: buildNewEpisodeEmail(name, seriesTitle, seriesTitleAr, epTitle, epTitleAr, episode_number, watchUrl),
-        });
-        sentCount++;
-        emailLogs.push({
-          user_id: userId,
-          type: "favorite_update",
-          reference_id: referenceId,
-        });
-      } catch (emailErr) {
-        console.error(`Failed to send to ${email}:`, emailErr);
-      }
-    }
-
-    // Log sent emails for deduplication
-    if (emailLogs.length > 0) {
-      await supabase.from("email_logs").insert(emailLogs);
-    }
-
-    // In-app notifications for fav users
-    const notifications = usersToNotify.map((userId: string) => ({
-      user_id: userId,
-      type: "new_episode",
-      title_en: `New Episode Available!`,
-      title_ar: `حلقة جديدة متاحة!`,
-      message_en: `${seriesTitle} - ${epTitle} is now live!`,
-      message_ar: `${seriesTitleAr} - ${epTitleAr} متاحة الآن!`,
-      link: `/watch/${series_slug}/${episode_number}`,
-    }));
-
-    // Notify admins via email
+    // ========== ADMIN EMAIL (always sent) ==========
     const { data: adminRoles } = await supabase
       .from("user_roles")
       .select("user_id")
       .eq("role", "admin");
     const adminIds = (adminRoles || []).map((r: any) => r.user_id);
+
+    console.log(`Sending admin emails to ${adminIds.length} admins`);
 
     for (const adminId of adminIds) {
       const adminEmail = authMap.get(adminId);
@@ -166,25 +72,102 @@ serve(async (req) => {
             subject: `🔔 Admin: New Episode Added - ${seriesTitle} Ep ${episode_number}`,
             html: buildAdminEpisodeEmail(seriesTitle, seriesTitleAr, epTitle, epTitleAr, episode_number, watchUrl),
           });
+          console.log(`Admin email sent to ${adminEmail}`);
         } catch (e) {
           console.error(`Failed admin email to ${adminEmail}:`, e);
         }
       }
     }
 
-    const adminNotifications = adminIds.map((adminId: string) => ({
-      user_id: adminId,
-      type: "admin_new_episode",
-      title_en: `Episode Added`,
-      title_ar: `تمت إضافة حلقة`,
-      message_en: `${seriesTitle} - ${epTitle} has been added.`,
-      message_ar: `${seriesTitleAr} - ${epTitleAr} تمت إضافتها.`,
-      link: `/watch/${series_slug}/${episode_number}`,
-    }));
+    // Admin in-app notifications
+    if (adminIds.length > 0) {
+      const adminNotifications = adminIds.map((adminId: string) => ({
+        user_id: adminId,
+        type: "admin_new_episode",
+        title_en: `Episode Added`,
+        title_ar: `تمت إضافة حلقة`,
+        message_en: `${seriesTitle} - ${epTitle} has been added.`,
+        message_ar: `${seriesTitleAr} - ${epTitleAr} تمت إضافتها.`,
+        link: `/watch/${series_slug}/${episode_number}`,
+      }));
+      await supabase.from("notifications").insert(adminNotifications);
+    }
 
-    await supabase.from("notifications").insert([...notifications, ...adminNotifications]);
+    // ========== USER EMAILS (favorites_notifications) ==========
+    const { data: favUsers } = await supabase
+      .from("favorites")
+      .select("user_id")
+      .eq("series_id", series_id);
 
-    return new Response(JSON.stringify({ success: true, sent: sentCount, total: emails.length }), {
+    const favUserIds = (favUsers || []).map((f: any) => f.user_id);
+
+    let sentCount = 0;
+
+    if (favUserIds.length > 0) {
+      const { data: eligibleProfiles } = await supabase
+        .from("profiles")
+        .select("id, name")
+        .in("id", favUserIds)
+        .eq("favorites_notifications", true);
+
+      const eligibleUsers = eligibleProfiles || [];
+
+      if (eligibleUsers.length > 0) {
+        const eligibleUserIds = eligibleUsers.map((p: any) => p.id);
+
+        // Deduplication
+        const { data: alreadySent } = await supabase
+          .from("email_logs")
+          .select("user_id")
+          .eq("type", "favorite_update")
+          .eq("reference_id", referenceId)
+          .in("user_id", eligibleUserIds);
+
+        const alreadySentIds = new Set((alreadySent || []).map((l: any) => l.user_id));
+        const usersToNotify = eligibleUsers.filter((u: any) => !alreadySentIds.has(u.id));
+
+        const emailLogs: any[] = [];
+
+        for (const user of usersToNotify) {
+          const email = authMap.get(user.id);
+          if (!email) continue;
+          try {
+            await transporter.sendMail({
+              from: `"HilalStream" <${SMTP_USER}>`,
+              to: email,
+              subject: `🎬 New Episode: ${seriesTitle} - ${epTitle}`,
+              html: buildNewEpisodeEmail(user.name || "Viewer", seriesTitle, seriesTitleAr, epTitle, epTitleAr, episode_number, watchUrl),
+            });
+            sentCount++;
+            emailLogs.push({ user_id: user.id, type: "favorite_update", reference_id: referenceId });
+          } catch (emailErr) {
+            console.error(`Failed to send to ${email}:`, emailErr);
+          }
+        }
+
+        if (emailLogs.length > 0) {
+          await supabase.from("email_logs").insert(emailLogs);
+        }
+
+        // In-app notifications
+        const userNotifications = usersToNotify.map((u: any) => ({
+          user_id: u.id,
+          type: "new_episode",
+          title_en: `New Episode Available!`,
+          title_ar: `حلقة جديدة متاحة!`,
+          message_en: `${seriesTitle} - ${epTitle} is now live!`,
+          message_ar: `${seriesTitleAr} - ${epTitleAr} متاحة الآن!`,
+          link: `/watch/${series_slug}/${episode_number}`,
+        }));
+        if (userNotifications.length > 0) {
+          await supabase.from("notifications").insert(userNotifications);
+        }
+      }
+    }
+
+    console.log(`Done. Admin emails: ${adminIds.length}, User emails: ${sentCount}`);
+
+    return new Response(JSON.stringify({ success: true, sent: sentCount, adminNotified: adminIds.length }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   } catch (error) {
