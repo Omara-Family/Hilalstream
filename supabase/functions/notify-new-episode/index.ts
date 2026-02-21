@@ -138,7 +138,7 @@ serve(async (req) => {
       await supabase.from("email_logs").insert(emailLogs);
     }
 
-    // Also create in-app notifications for all fav users (regardless of email pref)
+    // In-app notifications for fav users
     const notifications = usersToNotify.map((userId: string) => ({
       user_id: userId,
       type: "new_episode",
@@ -149,7 +149,24 @@ serve(async (req) => {
       link: `/watch/${series_slug}/${episode_number}`,
     }));
 
-    await supabase.from("notifications").insert(notifications);
+    // Notify admins about the new episode
+    const { data: adminRoles } = await supabase
+      .from("user_roles")
+      .select("user_id")
+      .eq("role", "admin");
+    const adminIds = (adminRoles || []).map((r: any) => r.user_id);
+
+    const adminNotifications = adminIds.map((adminId: string) => ({
+      user_id: adminId,
+      type: "admin_new_episode",
+      title_en: `Episode Added`,
+      title_ar: `تمت إضافة حلقة`,
+      message_en: `${seriesTitle} - ${epTitle} has been added.`,
+      message_ar: `${seriesTitleAr} - ${epTitleAr} تمت إضافتها.`,
+      link: `/watch/${series_slug}/${episode_number}`,
+    }));
+
+    await supabase.from("notifications").insert([...notifications, ...adminNotifications]);
 
     return new Response(JSON.stringify({ success: true, sent: sentCount, total: emails.length }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
