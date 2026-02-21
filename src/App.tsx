@@ -25,6 +25,7 @@ import AdminEpisodes from "./pages/admin/AdminEpisodes";
 import AdminUsers from "./pages/admin/AdminUsers";
 import AdminPrograms from "./pages/admin/AdminPrograms";
 import AdminProgramEpisodes from "./pages/admin/AdminProgramEpisodes";
+import AdminEmailLogs from "./pages/admin/AdminEmailLogs";
 import ProgramDetail from "./pages/ProgramDetail";
 import WatchProgram from "./pages/WatchProgram";
 
@@ -61,6 +62,7 @@ const AppInner = () => {
         <Route path="programs" element={<AdminPrograms />} />
         <Route path="program-episodes" element={<AdminProgramEpisodes />} />
         <Route path="users" element={<AdminUsers />} />
+        <Route path="email-logs" element={<AdminEmailLogs />} />
       </Route>
       <Route path="*" element={<NotFound />} />
     </Routes>
