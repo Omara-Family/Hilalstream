@@ -128,12 +128,28 @@ serve(async (req) => {
       link: `/series/${series_slug}`,
     }));
 
-    // Notify admins about the new series
+    // Notify admins via email
     const { data: adminRoles } = await supabase
       .from("user_roles")
       .select("user_id")
       .eq("role", "admin");
     const adminIds = (adminRoles || []).map((r: any) => r.user_id);
+
+    for (const adminId of adminIds) {
+      const adminEmail = authMap.get(adminId);
+      if (adminEmail) {
+        try {
+          await transporter.sendMail({
+            from: `"HilalStream" <${SMTP_USER}>`,
+            to: adminEmail,
+            subject: `🔔 Admin: New Series Added - ${seriesTitle}`,
+            html: buildAdminSeriesEmail(seriesTitle, seriesTitleAr, seriesUrl, poster_image),
+          });
+        } catch (e) {
+          console.error(`Failed admin email to ${adminEmail}:`, e);
+        }
+      }
+    }
 
     const adminNotifications = adminIds.map((adminId: string) => ({
       user_id: adminId,
@@ -211,4 +227,43 @@ function escapeHtml(str: string): string {
     .replace(/>/g, "&gt;")
     .replace(/"/g, "&quot;")
     .replace(/'/g, "&#039;");
+}
+
+function buildAdminSeriesEmail(
+  seriesTitle: string, seriesTitleAr: string,
+  seriesUrl: string, posterImage?: string
+) {
+  const posterBlock = posterImage
+    ? `<img src="${escapeHtml(posterImage)}" alt="${escapeHtml(seriesTitle)}" style="width:100%;max-height:200px;object-fit:cover;border-radius:12px;margin-bottom:20px;" />`
+    : '';
+
+  return `
+<!DOCTYPE html>
+<html dir="ltr">
+<head><meta charset="utf-8"></head>
+<body style="margin:0;padding:0;background:#0a0a0a;font-family:'Segoe UI',Tahoma,Geneva,Verdana,sans-serif;">
+  <div style="max-width:600px;margin:40px auto;background:linear-gradient(135deg,#1a1a2e 0%,#16213e 100%);border-radius:16px;overflow:hidden;border:1px solid #2a2a4a;">
+    <div style="background:linear-gradient(135deg,#c9a84c 0%,#e8c65a 100%);padding:24px 32px;text-align:center;">
+      <h1 style="margin:0;color:#0a0a0a;font-size:22px;font-weight:700;">HilalStream Admin</h1>
+      <p style="margin:6px 0 0;color:#1a1a2e;font-size:14px;">🔔 New Series Added</p>
+    </div>
+    <div style="padding:36px 32px;">
+      <h2 style="margin:0 0 16px;color:#f1f1f1;font-size:20px;">New Series Added Successfully</h2>
+      ${posterBlock}
+      <div style="padding:20px;background:#0f0f23;border-radius:14px;border:1px solid #2a2a4a;margin-bottom:24px;text-align:center;">
+        <p style="margin:0 0 4px;color:#c9a84c;font-size:18px;font-weight:700;">${escapeHtml(seriesTitle)}</p>
+        <p style="margin:0;color:#9ca3af;font-size:15px;direction:rtl;">${escapeHtml(seriesTitleAr)}</p>
+      </div>
+      <div style="text-align:center;margin:28px 0;">
+        <a href="${seriesUrl}" style="display:inline-block;padding:14px 48px;background:linear-gradient(135deg,#c9a84c 0%,#e8c65a 100%);color:#0a0a0a;text-decoration:none;border-radius:12px;font-weight:700;font-size:15px;">
+          View Series →
+        </a>
+      </div>
+    </div>
+    <div style="padding:16px 32px;border-top:1px solid #2a2a4a;text-align:center;">
+      <p style="margin:0;color:#4b5563;font-size:11px;">© 2025 HilalStream Admin Panel</p>
+    </div>
+  </div>
+</body>
+</html>`;
 }
